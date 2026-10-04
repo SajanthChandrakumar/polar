@@ -11,14 +11,15 @@ Noch keine Anwendung implementiert oder Zugangsdaten eingetragen.
 - Anwendung später auf Render; dauerhafte Speicherung in einer eigenen MongoDB-Atlas-Datenbank `polar_health_analytics`.
 - Sync zunächst beim authentifizierten Öffnen der Seite; keine automatische Hintergrundplanung im ersten Stand.
 - Raw-Responses vor Parsing unverändert als Binärdaten mit Herkunft, Abrufzeit und Hash archivieren.
-- Dashboard und Algorithmus erst nach verifizierter Datensammlung.
+- Dashboard zuerst als private Datenübersicht; danach alle Endpunkte mit echten Daten testen. Algorithmus erst nach verifizierter Datensammlung.
 
 ## Dokumentation
 
-1. [Anforderungen](docs/REQUIREMENTS.md)
-2. [Dateninventar](docs/DATA_INVENTORY.md)
-3. [Stack](docs/STACK.md)
-4. [Day 1](docs/DAY1.md)
+1. [Dashboard-Plan](docs/DASHBOARD_PLAN.md)
+2. [Anforderungen](docs/REQUIREMENTS.md)
+3. [Dateninventar](docs/DATA_INVENTORY.md)
+4. [Stack](docs/STACK.md)
+5. [Day 1](docs/DAY1.md)
 
 Architektur: Collector → Raw Storage → Normalizer → MongoDB → Quality Check → Dashboard → spätere Auswertung.
 
