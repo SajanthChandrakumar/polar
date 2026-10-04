@@ -11,3 +11,7 @@ node_modules/
 dist/
 work/
 outputs/
+
+# Frontend build / test outputs
+*.tsbuildinfo
+coverage/

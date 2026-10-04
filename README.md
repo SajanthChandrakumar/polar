@@ -1,8 +1,8 @@
 # Polar Health Analytics
 
-Planungsstand: 3. Oktober 2026. Zuerst alle verfügbaren Polar-Daten sammeln und unverändert sichern, anschließend über Auswertungen entscheiden.
+Stand: 4. Oktober 2026. Zuerst alle verfügbaren Polar-Daten sammeln und unverändert sichern, anschließend über Auswertungen entscheiden.
 
-Noch keine Anwendung implementiert oder Zugangsdaten eingetragen.
+Phase 1 ist als lokales React-/TypeScript-Dashboard implementiert. Backend, privater Zugang, Polar-OAuth und dauerhafte Speicherung folgen später. Keine Zugangsdaten eingetragen.
 
 ## Aktuelle Entscheidungen
 
@@ -24,3 +24,27 @@ Noch keine Anwendung implementiert oder Zugangsdaten eingetragen.
 Architektur: Collector → Raw Storage → Normalizer → MongoDB → Quality Check → Dashboard → spätere Auswertung.
 
 Keine Secrets, Tokens, Gesundheitsdaten oder lokalen Ausgaben ins Repository aufnehmen.
+
+## Dashboard lokal starten
+
+Voraussetzung: Node.js 20.19+ oder 22.12+ und npm.
+
+```sh
+cd apps/web
+npm ci
+npm run dev
+```
+
+Der Entwicklungsserver bindet ausschließlich an `127.0.0.1`; die lokale Adresse steht in seiner Ausgabe (üblicherweise `http://127.0.0.1:5173`).
+
+```sh
+npm test
+npm run build
+npm run preview
+```
+
+Der Build liegt in `apps/web/dist` und wird nicht versioniert. Es werden keine entfernten Schriftarten oder Bilder geladen.
+
+Die Oberfläche beginnt ohne Verbindung und ohne Kennzahlen. „Beispieldaten ansehen“ aktiviert ausdrücklich synthetische, nur im Browser gehaltene Fixtures. „Demo-Abruf“ simuliert einen Ladezustand und einen Teilerfolg; es gibt keine Anfrage an Polar und keine Speicherung. „Beispieldaten verlassen“ entfernt die Beispiele und bricht einen laufenden Demo-Abruf ab. Ein Neuladen startet wieder mit der leeren Ansicht.
+
+Alle 21 dokumentierten Endpunkte lassen sich durchsuchen, filtern und im Detail prüfen. Eine erfolgreiche leere Antwort bleibt von Fehlern und übersprungenen Routen getrennt. Die synthetischen Antwortstrukturen sind illustrative Beispiele, keine verifizierten Polar-API-Verträge. Der Verbindungsbutton erklärt den ausstehenden nächsten Schritt.
