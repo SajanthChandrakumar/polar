@@ -2,7 +2,7 @@ export type Status = 'pending' | 'loading' | 'populated' | 'empty' | 'failed' | 
 export type Source = { name: string; path: string; group: 'Messungen' | 'Konto & Planung' | 'Kataloge'; features: string; limit: string; status: Status; payload: unknown; count: number | null; message?: string; binary?: boolean };
 export const DEMO_TIME = '03.10.2026, 09:00';
 export const DEMO_PERIOD = '26.09.–03.10.2026';
-export const statusLabels: Record<Status, string> = { pending: 'Noch nicht geprüft', loading: 'Demo läuft', populated: 'Daten vorhanden', empty: 'Erfolgreich leer', failed: 'Fehlgeschlagen', denied: 'Zugriff verweigert', skipped: 'Übersprungen' };
+export const statusLabels: Record<Status, string> = { pending: 'Noch nicht geprüft', loading: 'Abruf läuft', populated: 'Daten vorhanden', empty: 'Erfolgreich leer', failed: 'Fehlgeschlagen', denied: 'Zugriff verweigert', skipped: 'Übersprungen' };
 const measurements = 'Messungen', planning = 'Konto & Planung', catalogs = 'Kataloge';
 // These are illustrative fixtures, not verified Polar response schemas.
 const records: [string, string, Source['group'], string, string, unknown][] = [

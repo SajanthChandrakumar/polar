@@ -1,6 +1,6 @@
 # Polar Health Analytics: Dashboard zuerst
 
-Stand: 3. Oktober 2026. Plan zur Prüfung; keine Implementierung gestartet.
+Stand: 5. Oktober 2026. Freigegebener Umsetzungsplan. Dashboard, privater Zugang, OAuth, Raw-Speicherung, Collector und Abruf beim Seitenstart sind implementiert. Lokale Abnahme und simulierte Vertrags-/Fehlertests vorhanden; echte Polar-Zustimmung, Live-Datenabnahme und Render-Deployment bleiben ausstehend.
 
 ## Ziel und Grenzen
 

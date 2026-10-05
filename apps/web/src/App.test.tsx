@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
-afterEach(() => vi.useRealTimers());
+beforeEach(() => vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({authenticated:false}),{status:200}))));
+afterEach(() => {vi.useRealTimers();vi.unstubAllGlobals();});
 const optIn = () => fireEvent.click(screen.getByRole('button', { name: 'Beispieldaten ansehen' }));
 
 describe('Dashboard behavior', () => {
@@ -10,7 +11,7 @@ describe('Dashboard behavior', () => {
     render(<App />);
     expect(screen.getByText('Nicht verbunden')).toBeVisible();
     expect(screen.queryByText('58')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Demo-Abruf' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Daten abrufen' })).toBeDisabled();
     optIn();
     expect(screen.getByText('58')).toBeVisible();
     expect(screen.getByRole('status', { name: 'Datenmodus' })).toHaveTextContent('synthetisch');
@@ -37,10 +38,10 @@ describe('Dashboard behavior', () => {
 
   it('keeps route IDs absent without a reference and shows binary metadata rather than JSON', () => {
     render(<App />);
+    optIn();
     fireEvent.click(screen.getByRole('button', { name: 'Details zu Routen' }));
     expect(within(screen.getByRole('dialog')).getByText(/Keine Route-ID/)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Details schließen' }));
-    optIn();
     fireEvent.click(screen.getByRole('button', { name: 'Details zu Profilbild' }));
     expect(within(screen.getByRole('dialog')).getByText('image/png')).toBeVisible();
     expect(within(screen.getByRole('dialog')).getByText(/2.048 Bytes/)).toBeVisible();
@@ -77,7 +78,7 @@ describe('Dashboard behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Beispieldaten verlassen' }));
     act(() => vi.advanceTimersByTime(3000));
     expect(screen.queryByText(/Demo-Abruf beendet/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Demo-Abruf' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Daten abrufen' })).toBeDisabled();
     expect(screen.queryByText('58')).not.toBeInTheDocument();
   });
 });

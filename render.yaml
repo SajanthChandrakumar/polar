@@ -1,0 +1,33 @@
+# Vorbereitung, kein automatisches Deployment. Secrets separat bei Render setzen.
+services:
+  - type: web
+    name: polar-health-analytics
+    runtime: python
+    plan: free
+    region: frankfurt
+    autoDeployTrigger: 'off'
+    buildCommand: pip install -r requirements.txt && npm --prefix apps/web ci && npm --prefix apps/web run build
+    startCommand: uvicorn polar_api.app:create_app --factory --host 0.0.0.0 --port $PORT --no-access-log
+    envVars:
+      - key: PYTHONPATH
+        value: apps/api
+      - key: NODE_VERSION
+        value: '22'
+      - key: MONGODB_DATABASE
+        value: polar_health_analytics
+      - key: APP_ORIGIN
+        sync: false
+      - key: POLAR_REDIRECT_URI
+        sync: false
+      - key: POLAR_CLIENT_ID
+        sync: false
+      - key: POLAR_CLIENT_SECRET
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false

@@ -2,7 +2,7 @@
 
 ## Aktuelle Entscheidung vom 3. Oktober 2026
 
-Diese Entscheidung ersetzt frühere SQLite-/Mac-/Scheduler-Vorgaben in diesem Dokument: FastAPI-Anwendung später auf Render, dauerhafte Raw- und Messdaten in einer eigenen MongoDB-Atlas-Datenbank `polar_health_analytics`. Raw-Body unverändert als Binärdaten; keine JSON-Neuserialisierung als Original. Sammlung aller verfügbaren Bereiche gemäß DATA_INVENTORY.md. Sync zunächst beim authentifizierten Öffnen der Seite; parallele Seitenaufrufe dürfen keine überlappenden Syncs starten. Keine öffentliche unauthentifizierte Sync-Funktion. Zeitgesteuerte Hintergrundabrufe werden verschoben. Kein Readiness-Algorithmus in dieser Phase. Browser-OAuth-Callback muss beim späteren Deployment auf die tatsächliche Render-URL angepasst werden; derzeit ist http://localhost:5000/oauth2_callback registriert. Implementierung und Zugangsdaten bleiben ausstehend.
+Diese Entscheidung ersetzt frühere SQLite-/Mac-/Scheduler-Vorgaben in diesem Dokument: FastAPI-Anwendung später auf Render, dauerhafte Raw- und Messdaten in einer eigenen MongoDB-Atlas-Datenbank `polar_health_analytics`. Raw-Body unverändert als Binärdaten; keine JSON-Neuserialisierung als Original. Sammlung aller verfügbaren Bereiche gemäß DATA_INVENTORY.md. Sync zunächst beim authentifizierten Öffnen der Seite; parallele Seitenaufrufe dürfen keine überlappenden Syncs starten. Keine öffentliche unauthentifizierte Sync-Funktion. Zeitgesteuerte Hintergrundabrufe werden verschoben. Kein Readiness-Algorithmus in dieser Phase. Browser-OAuth-Callback muss beim späteren Deployment auf die tatsächliche Render-URL angepasst werden; derzeit ist http://localhost:5000/oauth2_callback registriert. Backend und Collector sind inzwischen implementiert; Zugangsdaten bleiben ausschliesslich lokal. Echte Polar-Zustimmung und Live-Abnahme stehen noch aus. Aktuelle Request-Vertraege und dokumentierte Unklarheiten stehen in API_CONTRACTS.md.
 
 Frühere Abschnitte darunter dokumentieren den ursprünglichen Entwurf; abweichende SQLite-, lokale Scheduler- und Migrationsvorgaben gelten nicht mehr.
 
@@ -52,7 +52,7 @@ Vorgesehene Abrufe 08:30 und 20:30 Europe/Zurich, Nachholen beim nächsten Start
 
 ## Noch vor Implementierung abschließen
 
-Endpoint-Scopes, Parameterkodierung und Antwortschemas systematisch mit offizieller Spezifikation abgleichen. Widersprüche der Dokumentation als offene Vertragsfragen festhalten. Das Inventar ist noch kein vollständig verifizierter Request-Vertrag.
+Scopes, Parameterkodierung, Features und Antwortschemas sind anhand der offiziellen Swagger-Spezifikation in API_CONTRACTS.md abgeglichen. Dokumentierte Widersprueche und die Annahme zur ISO8601-Datumspraezision bleiben dort sichtbar und muessen beim ersten autorisierten Live-Abruf bestaetigt werden.
 
 ## Abnahme der späteren Sammlung
 

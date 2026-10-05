@@ -236,3 +236,11 @@ h1 { max-width: 750px; font-size: clamp(38px, 4.5vw, 64px); line-height: 1.07; l
 @media(prefers-reduced-motion:reduce) {
   *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; }
 }
+.login-form { display: grid; gap: 15px; font-size: 13px; }
+.login-form input, .response-select select { width: 100%; padding: 13px; border: 1px solid #b9c7ac; border-radius: 12px; background: #f9f7ee; color: #294d3d; }
+.login-form .primary { justify-self: start; }
+.response-select { display: grid; gap: 10px; font-size: 12px; margin-top: 24px; }
+.hash-field { grid-column: 1 / -1; }
+.detail-grid pre { white-space: pre-wrap; margin: 0; font-size: 11px; }
+.session-button { font-size: 11px; }
+@media(max-width:650px) { .site-header { gap: 14px; } .session-button { margin-left: auto; } .connection-state { margin-left: auto; } }
