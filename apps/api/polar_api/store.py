@@ -55,6 +55,7 @@ class Store:
         self.db.login_limits.create_index('expires_at', expireAfterSeconds=0)
         self.db.sync_runs.create_index('started_at')
         self.db.sync_endpoint_results.create_index([('run_id', 1), ('path', 1)], unique=True)
+        self.db.raw_api_responses.create_index([('path', 1), ('http_status', 1), ('fetched_at', 1)])
         self.recover()
 
     def recover(self):
@@ -217,6 +218,38 @@ class Store:
             return None, None
         body = self.fs.get(document['body_gridfs_id']).read() if 'body_gridfs_id' in document else bytes(document['body'])
         return document, body
+
+    def responses(self, response_ids):
+        """Batch archived bodies for the dashboard; no requests to Polar."""
+        result = {}
+        ids = [ObjectId(value) for value in dict.fromkeys(response_ids)]
+        for document in self.db.raw_api_responses.find({'_id': {'$in': ids}}):
+            body = self.fs.get(document['body_gridfs_id']).read() if 'body_gridfs_id' in document else bytes(document['body'])
+            result[str(document['_id'])] = (document, body)
+        return result
+
+    def analytics_responses(self, paths, since=None):
+        """Load latest successful unique metric bodies within a fetch-time window."""
+        paths = tuple(dict.fromkeys(path for path in paths if isinstance(path, str)))
+        if not paths:
+            return {}
+        query = {
+            'path': {'$in': paths},
+            'http_status': {'$gte': 200, '$lt': 300},
+        }
+        if since is not None:
+            query['fetched_at'] = {'$gte': since}
+        metadata = self.db.raw_api_responses.find(
+            query, {'_id': 1, 'path': 1, 'sha256': 1, 'fetched_at': 1},
+        ).sort([('fetched_at', -1), ('_id', -1)])
+        selected, seen = [], set()
+        for document in metadata:
+            digest = document.get('sha256')
+            identity = (document.get('path'), digest) if isinstance(digest, str) and digest else ('_id', document['_id'])
+            if identity not in seen:
+                selected.append(str(document['_id']))
+                seen.add(identity)
+        return self.responses(selected) if selected else {}
 
     def save_tokens(self, tokens, cipher):
         access = tokens.get('access_token')

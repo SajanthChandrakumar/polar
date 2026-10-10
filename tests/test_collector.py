@@ -10,6 +10,35 @@ from polar_api.inventory import ENDPOINTS, SCOPES
 
 NOW = datetime(2026, 10, 25, 12, 30, tzinfo=ZoneInfo('Europe/Zurich'))
 
+@pytest.mark.parametrize('path,first,last', [
+    ('/activity/list', '2026-10-18', '2026-10-26'),
+    ('/sleeps', '2026-10-18', '2026-10-26'),
+    ('/training-sessions/list', '2026-10-18T00:00:00', '2026-10-25T12:30:00'),
+    ('/calendar/list', '2026-10-18T00:00:00', '2026-10-25T12:30:00'),
+    ('/training-target/calendar-targets', '2026-10-18', '2026-10-26'),
+])
+def test_live_request_dates_match_endpoint_parsers(path, first, last):
+    endpoint = next(e for e in ENDPOINTS if e['path'] == path)
+    requests = plan_requests(endpoint, NOW)
+    assert requests[0]['from'] == first
+    assert requests[-1]['to'] == last
+
+@pytest.mark.parametrize('path,payload,want', [
+    ('/user/account-data', {'basicInfo': {'firstName': 'synthetic'}}, 1),
+    ('/subscriptions', {'userSubscriptions': []}, 0),
+    ('/training-target/favorites', [], 0),
+    ('/sports/profiles', [{'uuid': 'synthetic', 'profile': {}}], 1),
+    ('/sports/list', [{'id': {'id': 'synthetic'}}], 1),
+    ('/activity/list', {'activityDays': [{'date': 'synthetic'}]}, 1),
+    ('/calendar/list', {'entries': [{'date': 'synthetic'}]}, 1),
+    ('/temperature-measurements', {'temperatureMeasurementPeriods': []}, 0),
+    ('/training-sessions/list', {}, 0),
+])
+def test_observed_live_shapes_count_records_without_personal_values(path, payload, want):
+    from polar_api.collector import parsed_count
+    endpoint = next(e for e in ENDPOINTS if e['path'] == path)
+    assert parsed_count(endpoint, payload) == want
+
 class Store:
     def __init__(self):
         self.raw = []
@@ -49,9 +78,9 @@ def run_collect(monkeypatch, handler, store=None):
         return actual
     return asyncio.run(run())
 
-def test_inventory_contains_all_21_read_paths_and_operation_scopes():
-    assert len(ENDPOINTS) == 21
-    assert len({e['path'] for e in ENDPOINTS}) == 21
+def test_inventory_contains_all_19_read_paths_and_operation_scopes():
+    assert len(ENDPOINTS) == 19
+    assert len({e['path'] for e in ENDPOINTS}) == 19
     assert 'accesslink.read_all' not in SCOPES
     assert set(SCOPES) == {e['scope'] for e in ENDPOINTS}
     assert next(e for e in ENDPOINTS if e['path'] == '/training-sessions/list')['features'] == ['samples', 'test-results', 'training-load-report', 'laps', 'hill-splits', 'routes', 'statistics', 'zones', 'pause-times', 'strength-training-results', 'comments', 'physical-info']
@@ -66,17 +95,19 @@ def test_planner_all_features_sizes_and_calendar_days_including_dst_today():
         if endpoint.get('date_fields'):
             start_key, end_key = endpoint['date_fields']
             assert datetime.fromisoformat(requests[0][start_key]).date().isoformat() == '2026-10-18'
-            assert datetime.fromisoformat(requests[-1][end_key]) == NOW
+            date_only = endpoint['date_kind'] == 'date'
+            end_limit = datetime(2026, 10, 26) if date_only else NOW.replace(tzinfo=None)
+            assert datetime.fromisoformat(requests[-1][end_key]) == end_limit
             for params in requests:
                 start = datetime.fromisoformat(params[start_key])
                 end = datetime.fromisoformat(params[end_key])
-                assert start < end <= NOW
+                assert start < end <= end_limit
                 assert (end.date() - start.date()).days <= endpoint['max_days']
             if endpoint.get('detail_per_day'):
                 detail = [p for p in requests if 'features' in p]
                 assert len(detail) == 8
-                assert detail[-2]['to'] == '2026-10-25T00:00:00+02:00'
-                assert detail[-1]['to'] == '2026-10-25T12:30:00+01:00'
+                assert detail[-2]['to'] == ('2026-10-25' if date_only else '2026-10-25T00:00:00')
+                assert detail[-1]['to'] == ('2026-10-26' if date_only else '2026-10-25T12:30:00')
         if endpoint['features']:
             assert any(p.get('features') == endpoint['features'] for p in requests)
             assert 'features' not in requests[0]
@@ -89,7 +120,7 @@ def test_all_areas_archive_discovery_and_details_binary_and_routes_skip(monkeypa
         seen.append(request)
         return fixture(by_path[request.url.path.removeprefix('/v4/data')])
     store = run_collect(monkeypatch, handler)
-    assert len(store.results) == 21
+    assert len(store.results) == 19
     assert {r['path'] for r in store.results} == set(by_path)
     route = next(r for r in store.results if '{routeId}' in r['path'])
     assert route['status'] == 'skipped' and 'referenz' in route['message'].lower()
@@ -189,7 +220,7 @@ def test_midnight_period_never_sends_zero_or_future_today_window():
     midnight = NOW.replace(hour=0, minute=0)
     requests = plan_requests(endpoint, midnight)
     assert len(requests) == 8
-    assert requests[-1]['to'] == midnight.isoformat()
+    assert requests[-1]['to'] == '2026-10-25'
     assert all(p['from'] != p['to'] for p in requests)
     with pytest.raises(ValueError, match='timezone-aware'):
         plan_requests(endpoint, NOW.replace(tzinfo=None))
@@ -221,17 +252,14 @@ def test_redirect_is_archived_and_not_followed(monkeypatch):
     assert account['http_status'] == 302 and account['status'] == 'failed'
 
 
-def test_invalid_binary_content_type_never_becomes_populated(monkeypatch):
+def test_removed_profile_endpoints_are_never_requested(monkeypatch):
     by_path = {e['path']: e for e in ENDPOINTS}
     def handler(request):
         path = request.url.path.removeprefix('/v4/data')
-        if path == '/user/profile-picture':
-            return httpx.Response(200, json={'error': 'cannot load'})
+        assert path not in ('/user/profile-picture', '/sports/profile-list-catalog')
         return fixture(by_path[path])
     store = run_collect(monkeypatch, handler)
-    picture = next(r for r in store.results if r['path'] == '/user/profile-picture')
-    assert picture['status'] == 'failed' and picture['count'] is None
-    assert len(picture['response_ids']) == 3
+    assert len(store.results) == 19
 
 def test_token_store_failure_aborts_before_any_endpoint_result(monkeypatch):
     import polar_api.collector as collector
@@ -274,7 +302,7 @@ def test_expected_token_unavailable_is_isolated_without_exposing_detail():
             await collect(store, client, unavailable_token, 'run')
         return store
     store = asyncio.run(run())
-    assert len(store.results) == 21
+    assert len(store.results) == 19
     assert all(r['status'] in {'failed', 'skipped'} for r in store.results)
     assert 'private-detail' not in str(store.results)
     assert not store.raw

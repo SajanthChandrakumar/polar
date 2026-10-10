@@ -2,7 +2,7 @@
 
 ## Aktuelle Entscheidung vom 3. Oktober 2026
 
-Diese Entscheidung ersetzt frühere SQLite-/Mac-/Scheduler-Vorgaben in diesem Dokument: FastAPI-Anwendung später auf Render, dauerhafte Raw- und Messdaten in einer eigenen MongoDB-Atlas-Datenbank `polar_health_analytics`. Raw-Body unverändert als Binärdaten; keine JSON-Neuserialisierung als Original. Sammlung aller verfügbaren Bereiche gemäß DATA_INVENTORY.md. Sync zunächst beim authentifizierten Öffnen der Seite; parallele Seitenaufrufe dürfen keine überlappenden Syncs starten. Keine öffentliche unauthentifizierte Sync-Funktion. Zeitgesteuerte Hintergrundabrufe werden verschoben. Kein Readiness-Algorithmus in dieser Phase. Browser-OAuth-Callback muss beim späteren Deployment auf die tatsächliche Render-URL angepasst werden; derzeit ist http://localhost:5000/oauth2_callback registriert. Backend und Collector sind inzwischen implementiert; Zugangsdaten bleiben ausschliesslich lokal. Echte Polar-Zustimmung und Live-Abnahme stehen noch aus. Aktuelle Request-Vertraege und dokumentierte Unklarheiten stehen in API_CONTRACTS.md.
+Diese Entscheidung ersetzt frühere SQLite-/Mac-/Scheduler-Vorgaben in diesem Dokument: FastAPI-Anwendung später auf Render, dauerhafte Raw- und Messdaten in einer eigenen MongoDB-Atlas-Datenbank `polar_health_analytics`. Raw-Body unverändert als Binärdaten; keine JSON-Neuserialisierung als Original. Sammlung aller verfügbaren Bereiche gemäß DATA_INVENTORY.md. Sync zunächst beim authentifizierten Öffnen der Seite; parallele Seitenaufrufe dürfen keine überlappenden Syncs starten. Keine öffentliche unauthentifizierte Sync-Funktion. Zeitgesteuerte Hintergrundabrufe werden verschoben. Kein Readiness-Algorithmus in dieser Phase. Browser-OAuth-Callback muss beim späteren Deployment auf die tatsächliche Render-URL angepasst werden; Registriert sind http://localhost:5000/oauth2_callback und seit 5. Oktober 2026 zusaetzlich http://127.0.0.1:5000/oauth2_callback. Lokal verwendet das Backend die eindeutige IPv4-Adresse. Backend und Collector sind inzwischen implementiert; Zugangsdaten bleiben ausschliesslich lokal. Echte Polar-Zustimmung und Live-Abnahme stehen noch aus. Aktuelle Request-Vertraege und dokumentierte Unklarheiten stehen in API_CONTRACTS.md.
 
 Frühere Abschnitte darunter dokumentieren den ursprünglichen Entwurf; abweichende SQLite-, lokale Scheduler- und Migrationsvorgaben gelten nicht mehr.
 
@@ -28,14 +28,12 @@ Dokumentierter Umfang; Konto-Verfügbarkeit noch ungeprüft.
 | /training-target/favorites | Favoriten |
 | /training-target/calendar-targets | fromDate, toDate |
 | /routes/{routeId} | IDs aus Zielen/Favoriten; keine Drittanbieter-Routen |
-| /sports/profile-list-catalog | Profilreihenfolge |
 | /sports/profiles | Profile |
 | /sports/list | Sportkatalog |
 | /user/account-data | Konto |
-| /user/profile-picture | small, medium, large |
 | /subscriptions | Abonnements |
 
-/hello ist kein Datensatz. Alle 21 dokumentierten Daten-Endpunkte sind im Inventar enthalten.
+/hello ist kein Datensatz. 19 ausgewählte Daten-Endpunkte sind aktiv. Profilbild und Profilreihenfolge wurden auf Nutzerwunsch aus der Sammlung entfernt; bereits archivierte Antworten bleiben erhalten.
 Abfragefenster sind keine pauschalen Historiengrenzen.
 
 ## Festgelegtes Produktziel

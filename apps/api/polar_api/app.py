@@ -81,6 +81,13 @@ def create_app(settings=None, store=None, *, transport=None, collector=None):
         from .inventory import ENDPOINTS
         return ENDPOINTS
 
+    @app.get('/api/health')
+    def health():
+        store.db.command('ping')
+        if not (settings.frontend_dist / 'index.html').is_file():
+            raise HTTPException(503, 'Dashboard-Build noch nicht vorhanden.')
+        return {'status': 'ok'}
+
     @app.get('/api/session')
     def session(request: Request):
         return {'authenticated': bool(auth.session(request))}
@@ -98,12 +105,22 @@ def create_app(settings=None, store=None, *, transport=None, collector=None):
     def dashboard(request: Request):
         auth.require(request)
         connected, error = store.connection()
-        return {'connected': connected, 'connection_error': error, 'last_sync': store.latest_run(), 'sources': store.sources(inventory())}
+        from .metrics import dashboard_metrics
+        sources = store.sources(inventory())
+        return {'connected': connected, 'connection_error': error, 'last_sync': store.latest_run(), 'sources': sources, 'metrics': dashboard_metrics(store, sources)}
 
     @app.get('/api/endpoints')
     def endpoints(request: Request):
         auth.require(request)
         return inventory()
+
+    @app.get('/api/analytics')
+    def analytics_view(request: Request, days: int = 30):
+        auth.require(request)
+        if days not in (7, 30, 90):
+            raise HTTPException(422, 'Zeitraum muss 7, 30 oder 90 Tage betragen.')
+        from .analytics import analytics
+        return analytics(store, days)
 
     @app.get('/api/polar/authorize')
     def authorize(request: Request):

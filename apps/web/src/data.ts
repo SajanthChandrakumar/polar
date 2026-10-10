@@ -1,5 +1,5 @@
 export type Status = 'pending' | 'loading' | 'populated' | 'empty' | 'failed' | 'denied' | 'skipped';
-export type Source = { name: string; path: string; group: 'Messungen' | 'Konto & Planung' | 'Kataloge'; features: string; limit: string; status: Status; payload: unknown; count: number | null; message?: string; binary?: boolean };
+export type Source = { name: string; path: string; group: 'Messungen' | 'Konto & Planung' | 'Kataloge'; features: string; limit: string; status: Status; payload: unknown; count: number | null; message?: string };
 export const DEMO_TIME = '03.10.2026, 09:00';
 export const DEMO_PERIOD = '26.09.–03.10.2026';
 export const statusLabels: Record<Status, string> = { pending: 'Noch nicht geprüft', loading: 'Abruf läuft', populated: 'Daten vorhanden', empty: 'Erfolgreich leer', failed: 'Fehlgeschlagen', denied: 'Zugriff verweigert', skipped: 'Übersprungen' };
@@ -19,16 +19,14 @@ const records: [string, string, Source['group'], string, string, unknown][] = [
   ['Training', '/training-sessions/list', measurements, 'samples, test-results, training-load-report, laps, hill-splits, routes, statistics, zones, pause-times, strength-training-results, comments, physical-info', 'Ohne Features: 90 Tage · Details: 1 Tag', [{ date: '2026-10-02', sport: 'Walking', durationMinutes: 42, route: null }]],
   ['Kalender', '/calendar/list', planning, 'notes, feeling, feedback, perceived-recovery, weight, physical-information', '90 Tage je Anfrage', []],
   ['Trainingsfavoriten', '/training-target/favorites', planning, 'Favoriten', 'Ohne Zeitfilter', []],
-  ['Trainingsziele', '/training-target/calendar-targets', planning, 'fromDate, toDate', 'Gewählter Zeitraum', []],
+  ['Trainingsziele', '/training-target/calendar-targets', planning, 'from, to', 'Gewählter Zeitraum', []],
   ['Routen', '/routes/{routeId}', planning, 'Nur referenzierte Routen aus Zielen/Favoriten', 'Einzelne Route · keine Drittanbieter-Routen', null],
-  ['Profilreihenfolge', '/sports/profile-list-catalog', planning, 'Profilreihenfolge', 'Persönliche Profilkonfiguration', [{ id: 'demo-walking', order: 1 }]],
   ['Sportprofile', '/sports/profiles', planning, 'Profile', 'Ohne Zeitfilter', [{ sport: 'Walking', name: 'Beispielprofil' }]],
   ['Sportarten', '/sports/list', catalogs, 'Sportkatalog', 'Statischer Katalog', [{ id: 'demo-walking', name: 'Walking' }]],
   ['Konto', '/user/account-data', planning, 'Kontodaten', 'Ohne Zeitfilter', { name: 'Synthetisches Beispielkonto', timezone: 'Europe/Zurich' }],
-  ['Profilbild', '/user/profile-picture', planning, 'small, medium, large', 'Ohne Zeitfilter', { contentType: 'image/png', bytes: 2048, size: 'medium', synthetic: true }],
   ['Abonnements', '/subscriptions', planning, 'Abonnements', 'Ohne Zeitfilter', { error: 'Simulierter Berechtigungsfehler. Zugang nicht geprüft.' }],
 ];
-export const sources: Source[] = records.map(([name, path, group, features, limit, payload]) => ({ name, path, group, features, limit, payload, binary: name === 'Profilbild', count: Array.isArray(payload) ? payload.length : payload === null ? null : 1, status: name === 'Hauttemperatur' ? 'failed' : name === 'Abonnements' ? 'denied' : name === 'Routen' ? 'skipped' : Array.isArray(payload) && payload.length === 0 ? 'empty' : 'populated', message: name === 'Routen' ? 'Keine Route-ID aus Zielen oder Favoriten vorhanden; Anfrage übersprungen.' : undefined }));
+export const sources: Source[] = records.map(([name, path, group, features, limit, payload]) => ({ name, path, group, features, limit, payload, count: Array.isArray(payload) ? payload.length : payload === null ? null : 1, status: name === 'Hauttemperatur' ? 'failed' : name === 'Abonnements' ? 'denied' : name === 'Routen' ? 'skipped' : Array.isArray(payload) && payload.length === 0 ? 'empty' : 'populated', message: name === 'Routen' ? 'Keine Route-ID aus Zielen oder Favoriten vorhanden; Anfrage übersprungen.' : undefined }));
 export function sourceStatus(source: Source, demo: boolean, loading: boolean): Status {
   if (source.path === '/routes/{routeId}') return 'skipped';
   if (!demo) return 'pending';

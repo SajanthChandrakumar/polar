@@ -9,7 +9,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
-button, input, select { font: inherit; }
+button, input, select { font: inherit; min-height: 44px; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; border: 0; }
 button:disabled { cursor: not-allowed; opacity: .5; }
@@ -39,7 +39,7 @@ main { max-width: 1424px; padding: 60px 52px 28px; margin: auto; }
 .eyebrow { font-size: 10px; letter-spacing: 2px; font-weight: 650; color: #5b705c; margin-bottom: 17px; }
 h1 { max-width: 750px; font-size: clamp(38px, 4.5vw, 64px); line-height: 1.07; letter-spacing: -3px; font-weight: 550; }
 .subtitle { font-size: 16px; color: #546758; line-height: 1.6; margin-top: 18px; }
-.primary, .secondary, .text-button { display: inline-flex; justify-content: center; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+.primary, .secondary, .text-button { display: inline-flex; justify-content: center; align-items: center; gap: 10px; min-width: 44px; padding: 14px 20px; border-radius: 99px; font-size: 12px; font-weight: 600; }
 .primary { background: #294d3d; color: #faf7ec; white-space: nowrap; }
 .primary:hover { background: #183d2c; }
 .primary svg, .secondary svg, .text-button svg { width: 16px; height: 16px; }
@@ -69,10 +69,13 @@ h1 { max-width: 750px; font-size: clamp(38px, 4.5vw, 64px); line-height: 1.07; l
 .metric-icon svg { width: 17px; height: 17px; }
 .metric-header h2 { font-size: 12px; font-weight: 500; line-height: 1.5; }
 .metric-demo { font-size: 8px; letter-spacing: 1px; color: #d4dfc2; width: 100%; }
-.metric-value { margin-top: 28px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px; min-height: 55px; }
-.metric-value strong { font-size: clamp(26px, 2.6vw, 36px); line-height: 1.15; font-weight: 500; letter-spacing: -1.5px; }
+.metric-ring { width: 100%; max-width: 180px; aspect-ratio: 1; margin: 22px auto 18px; border: 7px solid #d7e39e; border-radius: 50%; display: grid; place-items: center; background: #234333; box-shadow: inset 0 0 0 5px #294d3d; }
+.metric-ring.stale { border-color: #c7b88d; border-style: dashed; }
+.metric-ring.unavailable { border-color: #54705b; background: transparent; }
+.metric-value { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-width: 0; padding: 8px; text-align: center; }
+.metric-value strong { font-size: clamp(22px, 2.1vw, 32px); line-height: 1.15; font-weight: 500; letter-spacing: -1px; white-space: nowrap; }
 .metric-value span { font-size: 10px; color: #d4dfc2; }
-.metric-card > p { font-size: 11px; line-height: 1.6; margin: 10px 0 24px; color: #d4dfc2; min-height: 37px; }
+.metric-card > p { font-size: 11px; line-height: 1.6; margin: 0 0 24px; color: #d4dfc2; min-height: 37px; text-align: center; }
 .card-link { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; text-align: left; font-size: 10px; color: #eef4df; background: none; border-top: 1px solid #54705b; padding: 14px 0 0; }
 .card-link:hover { color: #e2e998; }
 .card-link svg { width: 13px; height: 13px; }
@@ -132,7 +135,7 @@ h1 { max-width: 750px; font-size: clamp(38px, 4.5vw, 64px); line-height: 1.07; l
 .page-footer > span span { font-size: 10px; font-weight: 400; letter-spacing: 0; margin-left: 10px; }
 .dialog { width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); border: 1px solid #c9d2bb; padding: 0; border-radius: 20px; background: #faf8ef; color: #293d2b; box-shadow: 0 25px 80px #152c2940; }
 .dialog::backdrop { background: #193a2e80; backdrop-filter: blur(4px); }
-.dialog-content { padding: 30px; overflow-wrap: anywhere; }
+.dialog-content { max-height: calc(100dvh - 40px); padding: 30px; overflow: auto; overflow-wrap: anywhere; }
 .dialog-heading { display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-bottom: 24px; }
 .dialog-heading h2 { font-size: 28px; font-weight: 550; letter-spacing: -.8px; }
 .icon-button { display: grid; place-items: center; padding: 10px; border-radius: 50%; color: #415b37; background: #e5e9db; }
@@ -173,15 +176,17 @@ h1 { max-width: 750px; font-size: clamp(38px, 4.5vw, 64px); line-height: 1.07; l
   .connection-state { margin-left: auto; font-size: 10px; }
   .site-header nav { order: 3; width: 100%; margin: 0; gap: 24px; font-size: 12px; }
   .site-header nav a { padding: 5px 0; }
-  main { padding: 34px 20px 24px; }
-  .page-heading { flex-direction: column; align-items: start; gap: 22px; }
-  h1 { font-size: 43px; letter-spacing: -2px; }
-  .subtitle { font-size: 14px; }
-  .mode-banner { flex-direction: column; align-items: start; gap: 12px; padding: 18px; margin-top: 28px; }
-  .mode-banner > div { align-items: start; gap: 12px; }
-  .mode-banner .text-button { font-size: 11px; }
-  .mode-banner p { font-size: 11px; }
-  .period-bar { gap: 10px; align-items: end; }
+  main { padding: 24px 20px 24px; }
+  .page-heading { flex-direction: column; align-items: start; gap: 10px; }
+  .page-heading .eyebrow { display: none; }
+  h1 { font-size: 34px; line-height: 1.08; letter-spacing: -1.5px; }
+  .subtitle { font-size: 13px; }
+  .mode-banner { flex-direction: row; align-items: center; gap: 8px; padding: 10px 12px; margin-top: 14px; }
+  .mode-banner > div { align-items: start; gap: 8px; min-width: 0; }
+  .mode-banner .text-button { flex: 0 0 auto; max-width: 142px; padding: 6px 3px; font-size: 11px; line-height: 1.35; }
+  .mode-banner p { font-size: 11px; line-height: 1.4; }
+  .mode-banner.private-mode p { display: none; }
+  .period-bar { gap: 10px; align-items: end; margin: 16px 0 12px; }
   .period-bar > div:first-child { gap: 7px; max-width: 200px; }
   .period-bar .label { width: 100%; }
   .period-bar strong, .period-bar small { font-size: 10px; }
@@ -194,8 +199,8 @@ h1 { max-width: 750px; font-size: clamp(38px, 4.5vw, 64px); line-height: 1.07; l
   .metric-card:nth-child(n+5) { border-bottom: 0; }
   .metric-header { min-height: 40px; gap: 7px; }
   .metric-header h2 { font-size: 11px; }
-  .metric-value { margin-top: 19px; min-height: 48px; }
-  .metric-value strong { font-size: 31px; }
+  .metric-ring { margin-top: 16px; border-width: 6px; }
+  .metric-value strong { font-size: clamp(20px, 5.4vw, 29px); }
   .metric-card > p { font-size: 10px; margin-bottom: 20px; }
   .collection-note { align-items: start; margin: 22px 0 38px; gap: 12px; }
   .collection-note p { font-size: 11px; }
@@ -229,7 +234,7 @@ h1 { max-width: 750px; font-size: clamp(38px, 4.5vw, 64px); line-height: 1.07; l
 @media(max-width:360px) {
   main, .site-header { padding-left: 14px; padding-right: 14px; }
   h1 { font-size: 38px; }
-  .metric-value strong { font-size: 27px; }
+  .metric-value strong { font-size: 20px; }
   .metric-card { padding-left: 12px; padding-right: 12px; }
   .detail-grid { grid-template-columns: 1fr; }
 }

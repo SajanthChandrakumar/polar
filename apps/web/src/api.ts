@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { Status } from './data';
 export type LiveSource = {path:string; status:Status; http_status:number|null; count:number|null; fetched_at:string|null; message?:string; response_id?:string; response_ids?:string[]};
 export type Run = {run_id:string; status:string; results?:LiveSource[]; started_at?:string; finished_at?:string; from_date?:string; to_date?:string; from?:string; to?:string};
-export type Dashboard = {connected:boolean; connection_error?:string; last_sync:Run|null; sources:LiveSource[]};
+export type Metric = {value:number|null; unit:string; detail:string; date:string|null; status:'available'|'stale'|'unavailable'; sample_count?:number; source_path:string};
+export type Dashboard = {connected:boolean; connection_error?:string; last_sync:Run|null; sources:LiveSource[]; metrics?:Record<string,Metric>};
 export type StoredResponse = {path:string; params:Record<string,unknown>; http_status:number; content_type:string; fetched_at:string; sha256:string; size:number; payload:unknown; binary:boolean; raw_text?:string|null; payload_unavailable_reason?:string|null};
 export class ApiError extends Error { constructor(message:string, public status:number, public body:Record<string,unknown>) {super(message);} }
 export async function request<T>(path:string, signal?:AbortSignal, body?:unknown):Promise<T> {
@@ -56,7 +57,7 @@ export function useLiveDashboard(demo:boolean) {
           const data=await load().catch(()=>null);
           if(data?.last_sync?.status==='running'){poll=setTimeout(()=>void watch(data.last_sync!.run_id),2000);return;}
         }
-        if(reason instanceof ApiError && reason.status===429){setNotice(reason.message);setRunning(false);syncBusy.current=false;}else fail(reason);
+        if(reason instanceof ApiError && reason.status===429){if(!automatic)setNotice(reason.message);setRunning(false);syncBusy.current=false;}else fail(reason);
       }
     }
     control.current={sync};
@@ -68,6 +69,12 @@ export function useLiveDashboard(demo:boolean) {
     return ()=>{stopped=true;abort.abort();if(poll)clearTimeout(poll);control.current=null;syncBusy.current=false;};
   },[demo,authenticated,sessionReady]);
   async function login(password:string) {await request('/api/login',undefined,{password});setAuthenticated(true);setError('');}
-  async function logout() {try{await request('/api/logout',undefined,{});setAuthenticated(false);setDashboard(null);setError('');}catch(reason){if(reason instanceof ApiError && reason.status===401){setAuthenticated(false);setDashboard(null);setError('');}else setError(reason instanceof Error?reason.message:'Abmeldung fehlgeschlagen');}}
+  async function logout() {
+    setAuthenticated(false);setDashboard(null);setError('');setNotice('');
+    try {await request('/api/logout',undefined,{});}
+    catch(reason) {
+      if(!(reason instanceof ApiError && reason.status===401)) setError(`Die lokale Ansicht wurde geschlossen. Die Abmeldung am Server konnte nicht bestätigt werden: ${reason instanceof Error ? reason.message : 'Anfrage fehlgeschlagen'}`);
+    }
+  }
   return {authenticated,sessionReady,dashboard,error,notice,running,login,logout,sync:()=>control.current?.sync(false)};
 }

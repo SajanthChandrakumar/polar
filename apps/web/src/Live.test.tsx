@@ -4,6 +4,8 @@ import App from './App';
 import LiveDetails from './LiveDetails';
 import { sources } from './data';
 const source = {path:'/ppi-samples',status:'empty',http_status:200,count:0,fetched_at:'2026-10-05T12:00:00+02:00',message:'Keine Einträge',response_ids:['list','detail']};
+const openSources = () => fireEvent.click(screen.getByRole('link',{name:'Details ansehen'}));
+const revealOriginal = (container: HTMLElement = screen.getByRole('dialog')) => fireEvent.click(within(container).getByText('Originaldaten ansehen'));
 function backend(authenticated = true, connected = false) {
   const requests: {url:string, init?:RequestInit}[] = []; let loggedIn = authenticated;
   const fetcher = vi.fn(async (url: string, init?: RequestInit) => {
@@ -11,6 +13,7 @@ function backend(authenticated = true, connected = false) {
     if (url === '/api/session') body = {authenticated:loggedIn};
     else if (url === '/api/login') {loggedIn=true; body={authenticated:true};}
     else if (url === '/api/logout') {loggedIn=false; return new Response(null,{status:204});}
+    else if (url.startsWith('/api/analytics?')) body={days:30,from:'2026-09-06',to:'2026-10-05',timezone:'Europe/Zurich',series:[]};
     else if (url === '/api/dashboard') body={connected,last_sync:null,sources:[source]};
     else if (url === '/api/sync') body={run_id:'run-1',status:'running'};
     else if (url === '/api/sync/run-1') body={run_id:'run-1',status:'completed',results:[source]};
@@ -21,6 +24,65 @@ function backend(authenticated = true, connected = false) {
 }
 afterEach(() => {vi.useRealTimers(); vi.unstubAllGlobals();});
 describe('private live dashboard', () => {
+  it('keeps modal keyboard focus on visible controls when original data is closed or expanded', async () => {
+    backend(); render(<App/>);
+    await screen.findByText('Erfolgreich leer',{selector:'.badge'});
+    openSources();
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    const dialog=screen.getByRole('dialog');
+    const close=within(dialog).getByRole('button',{name:'Details schließen'});
+    const original=within(dialog).getByText('Originaldaten ansehen');
+    close.focus();
+    fireEvent.keyDown(close,{key:'Tab',shiftKey:true});
+    expect(original).toHaveFocus();
+    fireEvent.keyDown(original,{key:'Tab'});
+    expect(close).toHaveFocus();
+    fireEvent.click(original);
+    const raw=await within(dialog).findByLabelText('Antwortinhalt');
+    raw.focus();
+    fireEvent.keyDown(raw,{key:'Tab'});
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(close,{key:'Tab',shiftKey:true});
+    expect(raw).toHaveFocus();
+    fireEvent.click(original);
+    close.focus();
+    fireEvent.keyDown(close,{key:'Tab',shiftKey:true});
+    expect(original).toHaveFocus();
+  });
+
+  it('keeps raw response fields closed until the user opens Originaldaten', async () => {
+    backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
+    fireEvent.click(screen.getByRole('link',{name:'Details ansehen'}));
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    const dialog=screen.getByRole('dialog');
+    const sourceDisclosure=within(dialog).getByText('Quellendetails');
+    expect(sourceDisclosure.closest('details')).not.toHaveAttribute('open');
+    expect(within(dialog).getByText('Erfolgreich leer')).toBeVisible();
+    fireEvent.click(sourceDisclosure);
+    expect(within(dialog).getByText('/ppi-samples')).toBeVisible();
+    const disclosure=within(dialog).getByText('Originaldaten ansehen');
+    expect(disclosure.closest('details')).not.toHaveAttribute('open');
+    fireEvent.click(disclosure);
+    expect(await within(dialog).findByText('actual-hash')).toBeVisible();
+    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('list');
+  });
+
+  it('renders real dashboard metrics with dates and clears them on logout', async () => {
+    const {fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
+    fetcher.mockImplementation(async(url,init)=>url==='/api/dashboard' ? new Response(JSON.stringify({connected:false,last_sync:null,sources:[source],metrics:{heart:{value:72.5,unit:'bpm',detail:'Mittelwert der Pulsmessungen',date:'2026-10-07',status:'available'},moon:{value:420,unit:'min',detail:'Tatsächliche Schlafdauer',date:'2026-10-06',status:'stale'},activity:{value:0,unit:'Schritte',detail:'Schritt-Samples',date:'2026-10-07',status:'available'}}}),{status:200}) : fallback(url,init));
+    render(<App/>);
+    const heart=screen.getByRole('heading',{name:'Herzfrequenz'}).closest('article')!;
+    await within(heart).findByText('72.5');
+    expect(within(heart).getByText('bpm')).toBeVisible();
+    expect(within(heart).getByText(/07.10.2026/)).toBeVisible();
+    const sleep=within(screen.getByLabelText('Datenübersicht')).getByRole('heading',{name:'Schlaf'}).closest('article')!;
+    expect(within(sleep).getByText('7 h 00')).toBeVisible();
+    expect(within(sleep).getByText(/Älterer Messwert/)).toBeVisible();
+    const activity=screen.getByRole('heading',{name:'Aktivität'}).closest('article')!;
+    expect(within(activity).getByText('0')).toBeVisible();
+    fireEvent.click(screen.getByRole('button',{name:'Abmelden'}));
+    await waitFor(()=>expect(within(heart).queryByText('72.5')).not.toBeInTheDocument());
+  });
   it('keeps health endpoints private, logs in via password, and clears live data on logout', async () => {
     const {requests} = backend(false); render(<App/>);
     await waitFor(() => expect(requests.length).toBe(1)); expect(requests[0].url).toBe('/api/session');
@@ -34,15 +96,15 @@ describe('private live dashboard', () => {
     expect(screen.getByRole('button',{name:'Anmelden'})).toBeVisible(); expect(screen.queryByText('58')).not.toBeInTheDocument();
   });
   it('shows real statuses and provenance without synthetic metrics, dates or route state', async () => {
-    backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
-    expect(screen.getAllByRole('button',{name:/^Details zu/})).toHaveLength(21);
+    backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'}); openSources();
+    expect(screen.getAllByRole('button',{name:/^Details zu/})).toHaveLength(19);
     expect(screen.queryByText('58')).not.toBeInTheDocument(); expect(screen.queryByText('03.10.2026, 09:00')).not.toBeInTheDocument(); expect(screen.queryByText('Übersprungen')).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Datenquellen filtern'),{target:{value:'empty'}});
     expect(screen.getAllByRole('button',{name:/^Details zu/})).toHaveLength(1);
     fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
-    await within(screen.getByRole('dialog')).findByText('actual-hash');
+    const dialog=screen.getByRole('dialog'); revealOriginal(dialog); await within(dialog).findByText('actual-hash');
     expect(within(screen.getByRole('dialog')).getByText(/2026-10-01/)).toBeVisible();
-    expect(within(screen.getByRole('dialog')).getByLabelText('Gespeicherte Antwort')).toHaveTextContent('2'); expect(within(screen.getByRole('dialog')).getByText('[]')).toBeVisible();
+    expect(within(screen.getByRole('dialog')).getByLabelText('Gespeicherte Antwort')).toHaveTextContent('2'); expect(within(screen.getByRole('dialog')).getByLabelText('Antwortinhalt')).toHaveTextContent('[]');
   });
   it('reports backend failures visibly instead of substituting demo data', async () => {
     vi.stubGlobal('fetch',vi.fn(async () => new Response(JSON.stringify({detail:'Dienst nicht verfügbar'}),{status:503})));
@@ -52,13 +114,13 @@ describe('private live dashboard', () => {
     vi.useFakeTimers(); const {requests}=backend(true,true); render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     expect(requests.filter(r=>r.url==='/api/sync')).toHaveLength(1);
     expect(JSON.parse(requests.find(r=>r.url==='/api/sync')!.init!.body as string)).toEqual({automatic:true});
-    expect(screen.getByRole('button',{name:/Datenabruf läuft/})).toBeDisabled();
-    await act(async()=>{await vi.advanceTimersByTimeAsync(2000);}); expect(screen.getByText(/Datenabruf abgeschlossen/)).toBeVisible();
+    expect(screen.getByRole('button',{name:/Aktualisierung läuft/})).toBeDisabled();
+    await act(async()=>{await vi.advanceTimersByTimeAsync(2000);}); expect(screen.getByText(/Aktualisierung abgeschlossen|Datenabruf abgeschlossen/)).toBeVisible();
     await act(async()=>{await vi.advanceTimersByTimeAsync(6000);}); expect(requests.filter(r=>r.url==='/api/sync/run-1')).toHaveLength(1);
   });
   it('cancels polling on demo entry and isolates synthetic mode from backend', async () => {
     vi.useFakeTimers(); const {requests}=backend(true,true); render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
-    fireEvent.click(screen.getByRole('button',{name:'Beispieldaten ansehen'})); const before=requests.length;
+    fireEvent.click(screen.getByRole('button',{name:'Beispieldaten ansehen'})); openSources(); const before=requests.length;
     fireEvent.click(screen.getByRole('button',{name:'Demo-Abruf'})); fireEvent.click(screen.getByRole('button',{name:'Details zu Herzfrequenz'}));
     await act(async()=>{await vi.advanceTimersByTimeAsync(6000);}); expect(requests).toHaveLength(before); expect(screen.getByText('58')).toBeVisible();
   });
@@ -71,8 +133,9 @@ describe('private live dashboard', () => {
     fetcher.mockImplementation(async (url,init)=> {
       if(url==='/api/sync' && JSON.parse(init?.body as string).automatic) {requests.push({url,init});return new Response(JSON.stringify({detail:'Automatischer Abruf erst nach 15 Minuten'}),{status:429});}
       return fallback(url,init);
-    }); const {unmount}=render(<App/>); await screen.findByText(/Automatischer Abruf erst nach 15 Minuten/);
-    fireEvent.click(screen.getByRole('button',{name:'Daten abrufen'})); await waitFor(()=>expect(requests.filter(r=>r.url==='/api/sync')).toHaveLength(2));
+    }); const {unmount}=render(<App/>); await waitFor(()=>expect(requests.some(r=>r.url==='/api/sync')).toBe(true));
+    expect(screen.queryByText(/Automatischer Abruf erst nach 15 Minuten/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:'Aktualisieren'})); await waitFor(()=>expect(requests.filter(r=>r.url==='/api/sync')).toHaveLength(2));
     expect(JSON.parse(requests.filter(r=>r.url==='/api/sync')[1].init!.body as string)).toEqual({automatic:false}); unmount();
   });
   it('shows a rejected password and keeps private health endpoints untouched', async () => {
@@ -88,8 +151,9 @@ describe('private live dashboard', () => {
   it('shows stored binary metadata and detail failures without parsing an image as JSON', async () => {
     const {fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url.startsWith('/api/responses/') ? url.endsWith('detail') ? new Response(JSON.stringify({detail:'Archiv momentan nicht verfügbar'}),{status:503}) : new Response(JSON.stringify({path:'/user/profile-picture',params:{size:'large'},http_status:200,content_type:'image/png',fetched_at:source.fetched_at,sha256:'binary-hash',size:8192,binary:true,payload:null}),{status:200}) : fallback(url,init));
-    render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
+    render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'}); openSources();
     fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    revealOriginal();
     expect(await screen.findByText('image/png')).toBeVisible(); expect(screen.getByText('8192 Bytes')).toBeVisible();
     expect(screen.queryByLabelText('Antwortinhalt')).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Gespeicherte Antwort'),{target:{value:'detail'}});
@@ -99,12 +163,12 @@ describe('private live dashboard', () => {
   it('shows invalid JSON as archived raw text rather than silently replacing it with null', async () => {
     const {fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url.startsWith('/api/responses/') ? new Response(JSON.stringify({path:source.path,params:{},http_status:200,content_type:'application/json',fetched_at:source.fetched_at,sha256:'invalid-hash',size:12,binary:false,payload:null,raw_text:'{invalid-json'}),{status:200}) : fallback(url,init));
-    render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});openSources();fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal();
     expect(await screen.findByLabelText('Antwortinhalt')).toHaveTextContent('{invalid-json');
   });
   it('aborts in-flight detail and dashboard requests when entering demo', async () => {
-    const {requests}=backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
-    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); await screen.findByText('actual-hash');
+    const {requests}=backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'}); openSources();
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal(); await screen.findByText('actual-hash');
     fireEvent.click(screen.getByRole('button',{name:'Details schließen'}));
     fireEvent.click(screen.getByRole('button',{name:'Beispieldaten ansehen'}));
     expect(requests.filter(r=>r.url==='/api/dashboard'||r.url.startsWith('/api/responses/')).every(r=>r.init?.signal?.aborted)).toBe(true);
@@ -114,7 +178,7 @@ describe('private live dashboard', () => {
     vi.useFakeTimers(); const {requests,fetcher}=backend(true,true); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url==='/api/sync/run-1' ? (requests.push({url,init}),new Promise<Response>(()=>{})) : fallback(url,init));
     render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);}); await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
-    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    openSources(); fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     fireEvent.click(screen.getByRole('button',{name:'Abmelden'})); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     expect(requests.find(r=>r.url==='/api/sync/run-1')?.init?.signal?.aborted).toBe(true);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(screen.queryByText('actual-hash')).not.toBeInTheDocument();
@@ -123,7 +187,7 @@ describe('private live dashboard', () => {
     vi.useFakeTimers(); const {fetcher}=backend(true,true); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url==='/api/sync/run-1' ? new Response(JSON.stringify({detail:'Abrufstatus nicht verfügbar'}),{status:503}) : fallback(url,init));
     render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);}); await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
-    expect(screen.getByRole('alert')).toHaveTextContent('Abrufstatus nicht verfügbar');expect(screen.getByRole('button',{name:'Daten abrufen'})).toBeEnabled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Abrufstatus nicht verfügbar');expect(screen.getByRole('button',{name:'Aktualisieren'})).toBeEnabled();
   });
 
   it('gives a safe error for non-JSON server failures', async()=>{
@@ -135,7 +199,7 @@ describe('private live dashboard', () => {
     const {fetcher}=backend();const fallback=fetcher.getMockImplementation()!;
     let finishOld:(response:Response)=>void=()=>{};
     fetcher.mockImplementation(async(url,init)=>url==='/api/responses/list' ? new Promise<Response>(resolve=>{finishOld=resolve;}) : fallback(url,init));
-    render(<App/>);await screen.findByText('Erfolgreich leer',{selector:'.badge'});fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    render(<App/>);await screen.findByText('Erfolgreich leer',{selector:'.badge'});openSources();fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal();
     fireEvent.change(screen.getByLabelText('Gespeicherte Antwort'),{target:{value:'detail'}});await screen.findByText('actual-hash');
     await act(async()=>{finishOld(new Response(JSON.stringify({path:source.path,params:{},http_status:200,content_type:'application/json',fetched_at:source.fetched_at,sha256:'stale-response-hash',size:2,binary:false,payload:[]}),{status:200}));});
     expect(screen.getByText('actual-hash')).toBeVisible();expect(screen.queryByText('stale-response-hash')).not.toBeInTheDocument();
@@ -152,7 +216,7 @@ describe('private live dashboard', () => {
     });
     render(<App/>);await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
-    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    openSources(); fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     fireEvent.click(screen.getByRole('button',{name:'Abmelden'}));await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     expect(screen.getByRole('button',{name:'Anmelden'})).toBeVisible();
     expect(screen.queryByText('Erfolgreich leer',{selector:'.badge'})).not.toBeInTheDocument();
@@ -167,7 +231,7 @@ describe('private live dashboard', () => {
     const {rerender}=render(<LiveDetails source={item} authenticated={true} live={{...source,status:'pending',response_ids:[]}}/>);
     expect(screen.getByText('Noch keine gespeicherte Antwort vorhanden.')).toBeVisible();
     rerender(<LiveDetails source={item} authenticated={true} live={{...source,status:'empty',response_ids:['list','detail']}}/>);
-    expect(await screen.findByText('actual-hash')).toBeVisible();
+    revealOriginal(document.body); expect(await screen.findByText('actual-hash')).toBeVisible();
     expect(requests.some(request=>request.url==='/api/responses/list')).toBe(true);
     fireEvent.change(screen.getByLabelText('Gespeicherte Antwort'),{target:{value:'detail'}});
     await waitFor(()=>expect(requests.some(request=>request.url==='/api/responses/detail')).toBe(true));
@@ -178,4 +242,40 @@ describe('private live dashboard', () => {
     expect(screen.getByLabelText('Gespeicherte Antwort')).toHaveValue('third');
   });
 
+});
+
+it('opens the exact historical archive response from a chart point', async () => {
+  const {fetcher,requests}=backend(); const fallback=fetcher.getMockImplementation()!;
+  fetcher.mockImplementation(async(url,init)=> {
+    if(url.startsWith('/api/analytics?')) return new Response(JSON.stringify({days:7,from:'2026-10-01',to:'2026-10-07',timezone:'Europe/Zurich',series:[{key:'heart',label:'Herzfrequenz',unit:'bpm',kind:'line',source_path:'/continuous-samples',coverage:{valid_days:1,total_days:7},points:[{date:'2026-10-03',value:70,provisional:false,response_ids:['historical']}],feedback:[]}]}),{status:200});
+    if(url==='/api/responses/historical') return new Response(JSON.stringify({path:'/continuous-samples',params:{},http_status:200,content_type:'application/json',fetched_at:'2026-10-04',sha256:'history-hash',size:30,binary:false,payload:{historicalRecord:true}}),{status:200});
+    return fallback(url,init);
+  });
+  render(<App/>);
+  const heart=await screen.findByRole('region',{name:'Herzfrequenz'});
+  fireEvent.change(within(heart).getByRole('combobox',{name:'Tageswert Herzfrequenz'}),{target:{value:'2026-10-03'}});
+  fireEvent.click(within(heart).getByText('Messdetails ansehen'));
+  fireEvent.click(await within(heart).findByRole('button',{name:'Originalantwort ansehen'}));
+  const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
+  expect(await within(dialog).findByText('history-hash')).toBeVisible();
+  expect(within(dialog).getByLabelText('Antwortinhalt')).toHaveTextContent('historicalRecord');
+  expect(requests.some(r=>r.url==='/api/sync')).toBe(false);
+});
+
+it('hides and aborts private analytics immediately when logout is pending', async () => {
+  const {fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
+  let finishLogout!:(response:Response)=>void;
+  fetcher.mockImplementation(async(url,init)=> {
+    if(url==='/api/logout') return new Promise<Response>(resolve=>{finishLogout=resolve;});
+    if(url.startsWith('/api/analytics?')) return new Response(JSON.stringify({days:7,from:'2026-10-01',to:'2026-10-07',timezone:'Europe/Zurich',series:[{key:'heart',label:'Herzfrequenz',unit:'bpm',kind:'line',source_path:'/continuous-samples',coverage:{valid_days:1,total_days:7},points:[{date:'2026-10-03',value:70,provisional:false,response_ids:['private-history-id']}],feedback:[]}]}),{status:200});
+    return fallback(url,init);
+  });
+  render(<App/>);
+  const heart=await screen.findByRole('region',{name:'Herzfrequenz'});
+  fireEvent.change(within(heart).getByRole('combobox',{name:'Tageswert Herzfrequenz'}),{target:{value:'2026-10-03'}});
+  fireEvent.click(within(heart).getByText('Messdetails ansehen'));
+  await within(heart).findByText('private-history-id');
+  fireEvent.click(screen.getByRole('button',{name:'Abmelden'}));
+  await waitFor(()=>expect(screen.queryByText('private-history-id')).not.toBeInTheDocument());
+  await act(async()=>{finishLogout(new Response(null,{status:204}));});
 });

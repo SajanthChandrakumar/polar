@@ -20,31 +20,33 @@ def utc_now():
 
 
 def plan_requests(endpoint, now):
-    """Discovery plus all features; today stops at now, never a future timestamp."""
+    """Local datetimes, or date ranges with exclusive end including partial today."""
     if now.tzinfo is None:
         raise ValueError('A timezone-aware collection time is required')
     now = now.astimezone(ZURICH)
     today = now.date()
     start = datetime.combine(today - timedelta(days=7), time.min, ZURICH)
-    if endpoint['result_type'] == 'binary':
-        return [{'size': size} for size in endpoint['sizes']]
     if not endpoint.get('date_fields'):
         return [{}]
     from_key, to_key = endpoint['date_fields']
+    date_only = endpoint['date_kind'] == 'date'
+    end = datetime.combine(today + timedelta(days=int(now.time() != time.min)), time.min, ZURICH) if date_only else now
+    def wire(value):
+        return value.date().isoformat() if date_only else value.replace(tzinfo=None, microsecond=0).isoformat()
     windows = []
     cursor = start
-    while cursor < now:
-        stop = min(cursor + timedelta(days=endpoint['max_days']), now)
-        windows.append({from_key: cursor.isoformat(), to_key: stop.isoformat()})
+    while cursor < end:
+        stop = min(cursor + timedelta(days=endpoint['max_days']), end)
+        windows.append({from_key: wire(cursor), to_key: wire(stop)})
         cursor = stop
     if not endpoint['features']:
         return windows
     details = []
     cursor = start
-    while cursor < now:
+    while cursor < end:
         days = 1 if endpoint['detail_per_day'] else endpoint['max_days']
-        stop = min(cursor + timedelta(days=days), now)
-        details.append({from_key: cursor.isoformat(), to_key: stop.isoformat(), 'features': endpoint['features'][:]})
+        stop = min(cursor + timedelta(days=days), end)
+        details.append({from_key: wire(cursor), to_key: wire(stop), 'features': endpoint['features'][:]})
         cursor = stop
     return windows + details
 
@@ -106,14 +108,25 @@ async def fetch(store, client, token_provider, run_id, path, params, response_id
 
 def parsed_count(endpoint, payload):
     """Counts only the exact documented array/object, never arbitrary JSON keys."""
-    if not isinstance(payload, dict) or any(key in payload for key in ('error', 'errors')):
+    if not isinstance(payload, (dict, list)) or (isinstance(payload, dict) and any(key in payload for key in ('error', 'errors', 'errorMessage'))):
         raise ValueError('Unerwartete JSON-Antwort; kein dokumentierter Datensatz gezählt.')
+    if endpoint['path'] == '/user/account-data' and isinstance(payload, dict) and isinstance(payload.get('basicInfo'), dict):
+        return 1
+    # Protobuf JSON omits empty repeated fields, yielding {} for empty lists.
+    if payload == {} and endpoint.get('date_fields') and endpoint.get('count_path'):
+        return 0
     path = endpoint.get('count_path') or endpoint.get('object_path')
-    value = payload
-    for key in path:
-        if not isinstance(value, dict) or key not in value:
-            raise ValueError('Dokumentierte Antwortstruktur fehlt; Datensatzanzahl unbekannt.')
-        value = value[key]
+    value = None
+    for candidate in [path] + endpoint.get('wire_count_paths', []):
+        current = payload
+        for key in candidate:
+            if not isinstance(current, dict) or key not in current:
+                current = None
+                break
+            current = current[key]
+        if (endpoint.get('count_path') and isinstance(current, list)) or (endpoint.get('object_path') and isinstance(current, dict)):
+            value = current
+            break
     if endpoint.get('count_path'):
         if not isinstance(value, list):
             raise ValueError('Dokumentierte Liste fehlt; Datensatzanzahl unbekannt.')
@@ -129,7 +142,7 @@ def route_references(endpoint, payload):
     """Only documented trainingTarget/favoriteTarget -> exercise -> routeId."""
     key = 'trainingTarget' if endpoint['path'].endswith('calendar-targets') else 'favoriteTarget'
     refs = []
-    for target in payload.get(key, []):
+    for target in (payload if isinstance(payload, list) else payload.get(key, [])):
         if not isinstance(target, dict):
             continue
         exercises = target.get('exercise', [])
@@ -177,12 +190,6 @@ async def collect(store, client, get_access_token, run_id):
                 failure_http_status = response.status_code
                 failures.append('Polar-Verbindung erneuern (HTTP 401).' if response.status_code == 401 else 'Zugriff verweigert (HTTP 403).' if response.status_code == 403 else f'Polar-Abruf fehlgeschlagen (HTTP {response.status_code}).')
                 continue
-            if endpoint['result_type'] == 'binary':
-                if not response.headers.get('content-type', '').lower().startswith('image/'):
-                    failures.append('Unerwarteter Content-Type für Profilbild; Rohantwort gespeichert.')
-                elif response.content:
-                    result['status'] = 'populated'
-                continue
             try:
                 payload = response.json()
                 count = parsed_count(endpoint, payload)
@@ -199,7 +206,7 @@ async def collect(store, client, get_access_token, run_id):
                           message=' '.join(dict.fromkeys(failures)))
             if failure_http_status is not None:
                 result['http_status'] = failure_http_status
-        elif endpoint['result_type'] != 'binary':
+        else:
             # Features return the same records as discovery; never double-count both.
             result['count'] = sum(counts['detail'] or counts['discovery'])
             result['status'] = 'populated' if result['count'] else 'empty'

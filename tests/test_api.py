@@ -25,6 +25,31 @@ def login(client):
     return client.post('/api/login', json={'password': 'test-password-only'}, headers={'Origin': 'http://testserver'})
 
 
+def test_health_checks_database_and_frontend_without_login_or_collection(tmp_path, monkeypatch):
+    from polar_api.app import create_app
+    from polar_api.config import Settings
+    from pymongo.errors import ConnectionFailure
+    settings = Settings(owner_password='test-password-only', session_secret='x' * 40,
+                        token_encryption_key=Fernet.generate_key().decode(),
+                        frontend_dist=tmp_path)
+    store = make_store()
+    monkeypatch.setattr(store.db, 'command', lambda command: {'ok': 1})
+    client = TestClient(create_app(settings, store))
+    assert client.get('/api/health').status_code == 503
+    (tmp_path / 'index.html').write_text('<html>Dashboard</html>')
+    response = client.get('/api/health')
+    assert response.status_code == 200
+    assert response.json() == {'status': 'ok'}
+    assert client.get('/api/dashboard').status_code == 401
+    def unavailable(command):
+        raise ConnectionFailure('private-database-details')
+    monkeypatch.setattr(store.db, 'command', unavailable)
+    response = client.get('/api/health')
+    assert response.status_code == 503
+    assert 'private-database-details' not in response.text
+    assert store.db.sync_runs.count_documents({}) == 0
+
+
 def test_private_session_same_origin_and_logout_invalidates_cookie():
     client, store = build_client()
     assert client.get('/api/dashboard').status_code == 401
@@ -229,3 +254,25 @@ def test_unreadable_old_token_requires_reconnect_without_exception_or_leak():
     dashboard = client.get('/api/dashboard').json()
     assert dashboard['connected'] is False
     assert dashboard['connection_error']
+
+
+def test_analytics_is_private_validates_ranges_and_does_not_collect():
+    client, store = build_client()
+    assert client.get('/api/analytics').status_code == 401
+    login(client)
+    assert client.get('/api/analytics?days=8').status_code == 422
+    for days in (7, 30, 90):
+        response = client.get(f'/api/analytics?days={days}')
+        assert response.status_code == 200
+        data = response.json()
+        assert data['days'] == days
+        assert data['timezone'] == 'Europe/Zurich'
+        assert len(data['series']) == 5
+        assert len(data['daily_recovery']) == days
+        assert data['daily_recovery'][-1]['date'] == data['to']
+        assert all(item['value'] is None and item['reason'] == 'missing' for item in data['daily_recovery'])
+        assert all(item['source_path'] == '/nightly-recharge-results' and item['response_ids'] == [] for item in data['daily_recovery'])
+        assert all(len(series['points']) == days for series in data['series'])
+        assert all(point['value'] is None for series in data['series'] for point in series['points'])
+    assert store.db.sync_runs.count_documents({}) == 0
+    assert store.db.raw_api_responses.count_documents({}) == 0

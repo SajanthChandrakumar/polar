@@ -4,7 +4,7 @@ Stand: 5. Oktober 2026. Freigegebener Umsetzungsplan. Dashboard, privater Zugang
 
 ## Ziel und Grenzen
 
-Zuerst ein nutzbares privates Dashboard erstellen. Anschließend alle 21 dokumentierten Daten-Endpunkte und deren Detailfeatures mit dem verbundenen Polar-Konto abrufen, unverändert archivieren und sichtbar prüfen. Keine eigenen Readiness-Scores, kein Scheduler und keine umfangreiche Normalisierung im ersten Stand.
+Zuerst ein nutzbares privates Dashboard erstellen. Anschließend alle 19 dokumentierten Daten-Endpunkte und deren Detailfeatures mit dem verbundenen Polar-Konto abrufen, unverändert archivieren und sichtbar prüfen. Keine eigenen Readiness-Scores, kein Scheduler und keine umfangreiche Normalisierung im ersten Stand.
 
 React, TypeScript und Vite für das Dashboard; Python/FastAPI, HTTPX und PyMongo für das Backend. FastAPI liefert den Frontend-Build aus. Ein Render-Web-Service, bestehender Atlas-Cluster, separate Datenbank polar_health_analytics. Keine zusätzliche Infrastruktur für den ersten Stand.
 
@@ -13,7 +13,7 @@ React, TypeScript und Vite für das Dashboard; Python/FastAPI, HTTPX und PyMongo
 - Kompakte deutsche Oberfläche, nutzbar auf Handy und Desktop, helle Grundfläche und wenige Akzentfarben.
 - Kopfbereich: Polar-Verbindung, letzter Abruf, laufender Abruf und Zeitraum. Schaltflächen: „Mit Polar verbinden“ und „Daten abrufen“.
 - Übersicht: Herzfrequenz, Schlaf, Nightly Recharge, Aktivität, Training und Gerät. Vor realen Daten erscheinen leere Zustände, keine erfundenen Kennzahlen.
-- Bereich „Datenquellen“: 21 Endpunkte mit Status, letzter Anfrage, HTTP-Status, Datensatzanzahl soweit eindeutig bestimmbar und Fehlermeldung. Statische Kataloge werden getrennt von persönlichen Messungen dargestellt.
+- Bereich „Datenquellen“: 19 Endpunkte mit Status, letzter Anfrage, HTTP-Status, Datensatzanzahl soweit eindeutig bestimmbar und Fehlermeldung. Statische Kataloge werden getrennt von persönlichen Messungen dargestellt.
 - Detailansicht: Anfragezeitraum, angeforderte Features, Herkunft und formatierte Antwort. Für Binärantworten Dateityp und Größe; kein JSON-Parsen von Bildern.
 - Entwicklungsbeispiele sind synthetisch, sichtbar markiert und werden niemals in den echten Datenspeicher übernommen.
 - Erste Abnahme: Dashboard im Browser inklusive leerem, ladendem und fehlerhaftem Zustand prüfen.
@@ -30,7 +30,7 @@ React, TypeScript und Vite für das Dashboard; Python/FastAPI, HTTPX und PyMongo
 
 ## 3. Alle Endpunkte kontrolliert testen
 
-- Vor Code die 21 Request-Verträge anhand offizieller Dokumentation/Spezifikation festhalten: GET-Pfad, Scope, Pflichtparameter, Features, Zeitfenster und erwarteter Antworttyp. Dokumentationswidersprüche explizit prüfen.
+- Vor Code die 19 Request-Verträge anhand offizieller Dokumentation/Spezifikation festhalten: GET-Pfad, Scope, Pflichtparameter, Features, Zeitfenster und erwarteter Antworttyp. Dokumentationswidersprüche explizit prüfen.
 - Zuerst Geräte und Konto, danach persönliche Messbereiche, Ziele/Favoriten und zuletzt referenzierte Routen sowie Katalogdaten abrufen. Keine erfundenen Route-IDs; ohne Referenz wird der Route-Abruf als übersprungen erklärt.
 - Der erste Zeitraum umfasst die letzten sieben Kalendertage plus heute in Europe/Zurich. Originale Zeitzonen erhalten; Grenzen jedes Endpunkts beachten. Im Dashboard kann später innerhalb der dokumentierten Abfragegrenzen ein anderer Zeitraum gewählt werden.
 - Discovery-Listen und Detailantworten separat archivieren. Alle dokumentierten Features abrufen; bei Endpunkten mit Tageslimit pro Tag abfragen. Große Antworten nicht still abschneiden.
@@ -49,11 +49,11 @@ React, TypeScript und Vite für das Dashboard; Python/FastAPI, HTTPX und PyMongo
 ## 5. Prüfung und erster Live-Durchlauf
 
 - Browserprüfung auf Handy- und Desktopbreite: Login, leere Übersicht, Verbindung, laufender Abruf, Teilerfolg, erneute Anmeldung und Detailansicht.
-- Synthetische Antworten für alle 21 Endpunkte: Rohbytes und Hash nach Speicherung identisch, JSON- und Binärantworten korrekt behandelt; große Antwort über GridFS wiederherstellbar.
+- Synthetische Antworten für alle 19 Endpunkte: Rohbytes und Hash nach Speicherung identisch, JSON- und Binärantworten korrekt behandelt; große Antwort über GridFS wiederherstellbar.
 - Fehlerszenarien: 401, 403, 429, Timeout, 5xx, ungültiges JSON und MongoDB-Ausfall. Erfolgreiche andere Bereiche bleiben sichtbar. Keine Credentials in Raw, API-Antworten oder Logs.
 - Zwei gleichzeitig geöffnete Tabs starten nur einen Lauf. Neustart zeigt unterbrochenen Lauf und erlaubt Wiederholung. Tagesgrenzen und Sommerzeit korrekt verarbeiten.
 - Erst nach lokalem Funktionstest Render-Konfiguration vorbereiten. Zugangsdaten werden separat lokal beziehungsweise bei Render eingerichtet; niemals im Repo oder Chat.
-- Live-Abnahme mit dem Loop-Konto: Für jeden der 21 Bereiche einen tatsächlichen Status mit Begründung zeigen. Kein Datenbereich muss gefüllt sein, damit der Test erfolgreich ist; jeder muss nachvollziehbar geprüft oder mangels nötiger Referenz übersprungen sein.
+- Live-Abnahme mit dem Loop-Konto: Für jeden der 19 Bereiche einen tatsächlichen Status mit Begründung zeigen. Kein Datenbereich muss gefüllt sein, damit der Test erfolgreich ist; jeder muss nachvollziehbar geprüft oder mangels nötiger Referenz übersprungen sein.
 - Abschlussbericht: tatsächlich erhaltene Felder, Zeiträume, Gerätebezüge und Samples sowie leere/gesperrte Bereiche. Erst daraus den nächsten Analytics-Schritt ableiten.
 
 ## Reihenfolge und Fertigstellung
@@ -65,3 +65,5 @@ React, TypeScript und Vite für das Dashboard; Python/FastAPI, HTTPX und PyMongo
 5. Browserprüfung und autorisierter Live-Test.
 
 GitHub-Repo: https://github.com/SajanthChandrakumar/polar. Das Repo wurde vom Nutzer erstellt und ist öffentlich. Nur Quellcode und Dokumentation hochladen; keine Gesundheitsdaten oder Zugangsdaten. Dieser Plan autorisiert keine Bereitstellung von Secrets und keine OAuth-Zustimmung; diese erfolgen gesondert während der späteren Einrichtung.
+
+Am 7. Oktober 2026 wurden Profilbild und Profilreihenfolge auf Nutzerwunsch entfernt. Sechs Live-Karten werden jetzt aus den archivierten Antworten abgeleitet; fehlende Felder bleiben unavailable, ältere Messungen stale.

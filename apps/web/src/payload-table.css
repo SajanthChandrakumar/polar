@@ -1,0 +1,13 @@
+.payload-fields { margin: 24px 0; }
+.payload-fields > p { font-size: 12px; line-height: 1.6; color: #5d6a54; margin: 8px 0 16px; }
+.payload-fields > label { display: grid; gap: 8px; font-size: 12px; }
+.payload-fields input { padding: 12px; border: 1px solid #cbd7bf; border-radius: 8px; background: #faf9f3; }
+.payload-scroll { max-height: 420px; overflow: auto; margin-top: 16px; border: 1px solid #cbd7bf; border-radius: 8px; }
+.payload-fields table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+.payload-fields th, .payload-fields td { padding: 10px 12px; border-bottom: 1px solid #dce2d2; overflow-wrap: anywhere; vertical-align: top; }
+.payload-fields thead { background: #edf0e4; }
+.payload-fields tbody th { font-weight: 500; max-width: 220px; }
+.payload-fields td { max-width: 240px; }
+.payload-fields nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 11px; }
+.payload-fields nav button { padding: 10px 12px; background: #e5eadc; border-radius: 8px; color: #294d3d; }
+.payload-fields nav button:disabled { opacity: .4; }

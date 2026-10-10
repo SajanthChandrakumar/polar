@@ -41,16 +41,18 @@ class Settings:
         if callback.scheme != origin.scheme or callback.netloc != origin.netloc or callback.path != '/oauth2_callback' or callback.query or callback.fragment:
             raise RuntimeError('Polar callback must match APP_ORIGIN/oauth2_callback')
         if os.getenv('RENDER') and (origin.scheme != 'https' or origin.hostname in {'localhost', '127.0.0.1', 'testserver'}):
-            raise RuntimeError('Render requires an explicit public HTTPS APP_ORIGIN')
+            raise RuntimeError('Render requires a public HTTPS origin')
         self.public_url = self.public_url.rstrip('/')
 
     @classmethod
     def from_env(cls):
         load_dotenv()
-        origin = os.getenv('APP_ORIGIN', 'http://localhost:5000').rstrip('/')
+        origin = (os.getenv('APP_ORIGIN') or
+                  (os.getenv('RENDER_EXTERNAL_URL') if os.getenv('RENDER') else None) or
+                  'http://localhost:5000').rstrip('/')
         return cls(owner_password=os.getenv('OWNER_PASSWORD', ''), session_secret=os.getenv('SESSION_SECRET', ''),
                    token_encryption_key=os.getenv('TOKEN_ENCRYPTION_KEY', ''),
                    mongodb_uri=os.getenv('MONGODB_URI', os.getenv('MONGO_URI', '')),
                    database=os.getenv('MONGODB_DATABASE', 'polar_health_analytics'),
                    client_id=os.getenv('POLAR_CLIENT_ID', ''), client_secret=os.getenv('POLAR_CLIENT_SECRET', ''),
-                   public_url=origin, redirect_uri=os.getenv('POLAR_REDIRECT_URI', origin + '/oauth2_callback'))
+                   public_url=origin, redirect_uri=os.getenv('POLAR_REDIRECT_URI') or origin + '/oauth2_callback')
