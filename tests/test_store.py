@@ -7,14 +7,16 @@ import pytest
 from mongomock.gridfs import enable_gridfs_integration
 
 
-def make_store(threshold=14_000_000):
+def make_store():
     from polar_api.store import Store
     enable_gridfs_integration()
-    return Store(mongomock.MongoClient(tz_aware=True).polar_test, gridfs_threshold=threshold)
+    store = Store(mongomock.MongoClient(tz_aware=True).polar_test)
+    store.initialize()
+    return store
 
 
 def test_raw_body_and_gridfs_remain_byte_exact_and_no_credentials():
-    store = make_store(10)
+    store = make_store()
     run = store.begin_run(False)
     body = b' {"broken": \xff\x00}'
     response = httpx.Response(200, content=body, headers={"content-type": "application/json", "Authorization": "secret"})
@@ -25,6 +27,53 @@ def test_raw_body_and_gridfs_remain_byte_exact_and_no_credentials():
     assert saved['body_gridfs_id']
     assert saved['params'] == {'from': '2026-10-01'}
     assert 'secret' not in repr(saved)
+
+
+def test_identical_bodies_share_storage_without_merging_fetch_history():
+    store = make_store()
+    first = store.begin_run(False)
+    a = store.save_response(first['run_id'], '/sleeps', {'from': '2026-10-01'}, httpx.Response(200, content=b'{"value":1}'))
+    store.finish_run(first['run_id'], 'completed')
+    second = store.begin_run(False)
+    b = store.save_response(second['run_id'], '/activity/list', {'from': '2026-10-02'}, httpx.Response(200, content=b'{"value":1}'))
+    c = store.save_response(second['run_id'], '/sleeps', {}, httpx.Response(200, content=b'{"value":2}'))
+    assert a != b
+    assert store.db.raw_api_responses.count_documents({}) == 3
+    assert store.db['fs.files'].count_documents({}) == 2
+    assert store.response(a)[1] == store.response(b)[1] == b'{"value":1}'
+    assert store.response(c)[1] == b'{"value":2}'
+    assert store.response(a)[0]['run_id'] == first['run_id']
+    assert store.response(b)[0]['run_id'] == second['run_id']
+
+
+def test_shared_body_race_keeps_winner_and_removes_only_losing_upload(monkeypatch):
+    store = make_store()
+    run = store.begin_run(False)
+    original_find = store.fs.find_one
+    missed = False
+    def race(*args, **kwargs):
+        nonlocal missed
+        if not missed:
+            missed = True
+            store.save_response(run['run_id'], '/sleeps', {}, httpx.Response(200, content=b'same'))
+            return None
+        return original_find(*args, **kwargs)
+    monkeypatch.setattr(store.fs, 'find_one', race)
+    response_id = store.save_response(run['run_id'], '/sleeps', {}, httpx.Response(200, content=b'same'))
+    assert store.response(response_id)[1] == b'same'
+    assert store.db['fs.files'].count_documents({}) == 1
+    assert store.db['fs.chunks'].count_documents({}) == 1
+
+
+def test_legacy_inline_and_gridfs_bodies_remain_readable():
+    from bson import Binary
+    store = make_store()
+    inline = store.db.raw_api_responses.insert_one({'body': Binary(b'legacy')}).inserted_id
+    file_id = store.fs.put(b'old-file')
+    large = store.db.raw_api_responses.insert_one({'body_gridfs_id': file_id}).inserted_id
+    assert store.response(str(inline))[1] == b'legacy'
+    assert store.response(str(large))[1] == b'old-file'
+    assert {key: body for key, (_, body) in store.responses([str(inline),str(large)]).items()} == {str(inline): b'legacy', str(large): b'old-file'}
 
 
 def test_lease_excludes_tabs_cooldown_and_stale_fencing():

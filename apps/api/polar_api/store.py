@@ -43,9 +43,8 @@ def public(value):
 class Store:
     LEASE_SECONDS = 90
 
-    def __init__(self, db, gridfs_threshold=14_000_000):
+    def __init__(self, db):
         self.db = db
-        self.gridfs_threshold = gridfs_threshold
         self.fs = gridfs.GridFS(db)
 
     def initialize(self):
@@ -56,6 +55,7 @@ class Store:
         self.db.sync_runs.create_index('started_at')
         self.db.sync_endpoint_results.create_index([('run_id', 1), ('path', 1)], unique=True)
         self.db.raw_api_responses.create_index([('path', 1), ('http_status', 1), ('fetched_at', 1)])
+        self.db['fs.files'].create_index('metadata.sha256', unique=True, sparse=True)
         self.recover()
 
     def recover(self):
@@ -154,14 +154,29 @@ class Store:
                     'params': {k: v for k, v in params.items() if k.lower() not in {'access_token', 'refresh_token', 'token', 'authorization', 'client_secret', 'password', 'code', 'state'}},
                     'http_status': response.status_code, 'content_type': response.headers.get('content-type', ''),
                     'fetched_at': now(), 'sha256': hashlib.sha256(raw).hexdigest(), 'size': len(raw)}
-        if len(raw) >= self.gridfs_threshold:
-            document['body_gridfs_id'] = self.fs.put(raw)
-        else:
-            document['body'] = Binary(raw)
+        document['body_gridfs_id'] = self.archive_body(raw)
         response_id = self.db.raw_api_responses.insert_one(document).inserted_id
         # Fencing after persistence prevents a replaced worker from reporting its writes as live results.
         self._lease(run_id)
         return str(response_id)
+
+    def archive_body(self, raw):
+        """Share immutable bytes; every fetch retains its own metadata and ID."""
+        query = {'metadata.sha256': hashlib.sha256(raw).hexdigest()}
+        existing = self.fs.find_one(query)
+        if existing is not None:
+            return existing._id
+        file_id = ObjectId()
+        try:
+            self.fs.put(raw, _id=file_id, metadata={'sha256': query['metadata.sha256']})
+        except gridfs.errors.FileExists:
+            # A concurrent writer won the unique hash index. Only discard our upload.
+            self.fs.delete(file_id)
+            winner = self.fs.find_one(query)
+            if winner is None:
+                raise
+            return winner._id
+        return file_id
 
     def save_result(self, run_id, result):
         token = self._lease(run_id)
