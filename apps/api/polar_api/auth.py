@@ -48,10 +48,12 @@ class Auth:
 
     def login(self, request, password, response):
         self.origin(request)
-        # Single owner: a database counter also covers simultaneous clients and process restarts.
+        # Use the ASGI peer address; forwarded headers are only safe after proxy trust is configured.
         timestamp = now()
         bucket = int(timestamp.timestamp()) // 60
-        attempt = self.store.db.login_limits.find_one_and_update({'_id': str(bucket)}, {'$inc': {'attempts': 1}, '$set': {'expires_at': timestamp + timedelta(minutes=2)}}, upsert=True, return_document=True)
+        client_host = request.client.host if request.client and request.client.host else '<missing-client>'
+        client_id = hmac.new(self.settings.session_secret.encode(), b'login-limit:' + client_host.encode(), hashlib.sha256).hexdigest()
+        attempt = self.store.db.login_limits.find_one_and_update({'_id': f'{bucket}:{client_id}'}, {'$inc': {'attempts': 1}, '$set': {'expires_at': timestamp + timedelta(minutes=2)}}, upsert=True, return_document=True)
         if attempt['attempts'] > 5:
             raise HTTPException(429, 'Zu viele Anmeldeversuche. Bitte später erneut versuchen.', headers={'Retry-After': '60'})
         if not hmac.compare_digest(self._hash(password), self._hash(self.settings.owner_password)):

@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -9,20 +10,27 @@ from fastapi.testclient import TestClient
 from test_store import make_store
 
 
-def build_client(transport=None, collector=None):
+def build_client(transport=None, collector=None, store=None, client=('testclient', 50000)):
     from polar_api.app import create_app
     from polar_api.config import Settings
     settings = Settings(owner_password='test-password-only', session_secret='x' * 40,
                         token_encryption_key=Fernet.generate_key().decode(), client_id='test-client',
                         client_secret='test-secret', public_url='http://testserver',
                         redirect_uri='http://testserver/oauth2_callback')
-    store = make_store()
+    store = store or make_store()
     app = create_app(settings, store, transport=transport, collector=collector)
-    return TestClient(app), store
+    return TestClient(app, client=client), store
 
 
 def login(client):
     return client.post('/api/login', json={'password': 'test-password-only'}, headers={'Origin': 'http://testserver'})
+
+
+def freeze_login_time(monkeypatch):
+    from polar_api import auth as auth_module
+    current = [datetime(2035, 1, 1, tzinfo=timezone.utc)]
+    monkeypatch.setattr(auth_module, 'now', lambda: current[0])
+    return current
 
 
 def test_health_checks_database_and_frontend_without_login_or_collection(tmp_path, monkeypatch):
@@ -63,13 +71,79 @@ def test_private_session_same_origin_and_logout_invalidates_cookie():
     assert client.get('/api/dashboard').status_code == 401
 
 
-def test_login_throttles_wrong_password_without_leaking():
-    client, _ = build_client()
+def test_login_throttles_wrong_password_from_same_client_without_leaking(monkeypatch):
+    freeze_login_time(monkeypatch)
+    client, _ = build_client(client=('198.51.100.10', 1234))
     for _ in range(5):
         assert client.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
     response = login(client)
     assert response.status_code == 429
     assert 'test-password' not in response.text
+
+
+def test_login_limit_isolated_by_client_address(monkeypatch):
+    freeze_login_time(monkeypatch)
+    attacker, store = build_client(client=('198.51.100.10', 1234))
+    owner, _ = build_client(store=store, client=('198.51.100.11', 1234))
+    for _ in range(5):
+        assert attacker.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(attacker).status_code == 429
+    assert login(owner).status_code == 200
+
+
+def test_login_limit_ignores_spoofed_forwarding_headers(monkeypatch):
+    freeze_login_time(monkeypatch)
+    client, _ = build_client(client=('198.51.100.10', 1234))
+    for index in range(5):
+        response = client.post('/api/login', json={'password': 'wrong'}, headers={
+            'Origin': 'http://testserver',
+            'X-Forwarded-For': f'203.0.113.{index + 1}',
+            'Forwarded': f'for=203.0.113.{index + 1}',
+        })
+        assert response.status_code == 401
+    assert login(client).status_code == 429
+
+
+def test_login_limit_resets_for_same_client_in_next_minute(monkeypatch):
+    current = freeze_login_time(monkeypatch)
+    client, _ = build_client(client=('198.51.100.10', 1234))
+    for _ in range(5):
+        assert client.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(client).status_code == 429
+    current[0] += timedelta(minutes=1)
+    assert login(client).status_code == 200
+
+
+def test_login_limit_is_shared_by_app_instances_through_database(monkeypatch):
+    freeze_login_time(monkeypatch)
+    store = make_store()
+    first, _ = build_client(store=store, client=('198.51.100.10', 1234))
+    second, _ = build_client(store=store, client=('198.51.100.10', 5678))
+    for _ in range(5):
+        assert first.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(second).status_code == 429
+    assert store.db.login_limits.count_documents({}) == 1
+
+
+def test_login_requests_without_client_share_the_fallback_budget(monkeypatch):
+    freeze_login_time(monkeypatch)
+    store = make_store()
+    first, _ = build_client(store=store, client=None)
+    second, _ = build_client(store=store, client=None)
+    for _ in range(5):
+        assert first.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(first).status_code == 429
+    assert login(second).status_code == 429
+    assert store.db.login_limits.count_documents({}) == 1
+
+
+def test_login_limit_database_key_does_not_store_client_ip(monkeypatch):
+    freeze_login_time(monkeypatch)
+    client, store = build_client(client=('203.0.113.77', 1234))
+    assert client.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    saved = list(store.db.login_limits.find({}))
+    assert len(saved) == 1
+    assert '203.0.113.77' not in repr(saved[0])
 
 
 def test_oauth_state_is_single_use_session_bound_and_tokens_private():

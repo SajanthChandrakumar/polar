@@ -4,7 +4,8 @@ Python 3.12 und Node.js 22 verwenden. Alle Befehle im Repository-Stamm ausfuehre
 
 ```sh
 python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install --upgrade pip==26.2.2
+.venv/bin/python -m pip install -r requirements.lock
 .venv/bin/python scripts/setup_local.py
 npm --prefix apps/web ci
 npm --prefix apps/web run build
@@ -72,7 +73,7 @@ Tests verwenden simulierte MongoDB-/Polar-Antworten. Sie duerfen `.env` oder das
 Build und Start sind in `render.yaml` festgelegt:
 
 ```sh
-pip install -r requirements.txt && npm --prefix apps/web ci && npm --prefix apps/web run build
+python -m pip install --upgrade pip==26.2.2 && python -m pip install -r requirements.lock && npm --prefix apps/web ci && npm --prefix apps/web run build
 uvicorn polar_api.app:create_app --factory --host 0.0.0.0 --port $PORT --no-access-log
 ```
 
@@ -81,3 +82,13 @@ uvicorn polar_api.app:create_app --factory --host 0.0.0.0 --port $PORT --no-acce
 Ein Prozess, kein Scheduler. Free-Dienste können pausieren; der erste Aufruf kann deshalb länger dauern. Bereits gespeicherte Antworten bleiben in MongoDB. Ein unterbrochener Abruf kann erneut gestartet werden. 90 Tage Verlauf zeigen ausschließlich vorhandene Archivdaten; es gibt keine automatische historische Nachladung.
 
 Offizielle Quellen: [Blueprint-Format und automatische Deploys](https://render.com/docs/blueprint-spec), [Render-Umgebungsvariablen](https://render.com/docs/environment-variables), [ausgehende IP-Adressen](https://render.com/docs/outbound-ip-addresses), [Python-Version](https://render.com/docs/python-version), [native Build-Werkzeuge](https://render.com/docs/native-runtimes).
+
+## Sicherheitsstand und Anmeldung
+
+`requirements.txt` enthält die direkten Abhängigkeiten und Sicherheitsuntergrenzen. `requirements.lock` hält die getestete Python-3.12-Auflösung einschließlich transitiver Pakete fest; `apps/web/package-lock.json` erfüllt dieselbe Aufgabe für npm. Der Build aktualisiert pip zuerst auf 26.2.2, damit auch dessen separat mitgelieferter Zertifikatsspeicher erneuert wird. Bei einem manuell eingerichteten Render-Dienst den aktualisierten Build-Befehl aus `render.yaml` übernehmen.
+
+Die Anmeldung erlaubt fünf Versuche je Client-Adresse und Kalenderminute. Der Zähler bleibt in MongoDB über Prozessneustarts hinweg erhalten und läuft per TTL ab. Gespeichert wird eine mit dem Sitzungsschlüssel geschützte Kennung, keine Klartext-IP. Ein ausgeschöpftes Budget sperrt weiterhin diesen Client, nicht andere Adressen. Clients hinter derselben öffentlichen Adresse teilen ein Budget; dies ersetzt keinen Schutz gegen verteilte Angriffe.
+
+Die App liest dafür ausschließlich `request.client` aus ASGI und interpretiert keine `X-Forwarded-For`-/`Forwarded`-Header selbst. Hinter einem Proxy muss Uvicorns `FORWARDED_ALLOW_IPS` zu den tatsächlich vertrauenswürdigen Proxys passen. `*` nur verwenden, wenn der vorgelagerte Proxy fremde Forwarding-Header verlässlich entfernt und selbst setzt. Andernfalls können Adressen gefälscht werden; ohne passende Weiterleitung können alle Nutzer als Proxy-Adresse erscheinen. Render setzt für Python-Dienste standardmäßig `FORWARDED_ALLOW_IPS=*`; das ist keine Bestätigung, dass beliebige vom Client mitgesendete Werte sicher sind. Die tatsächliche Render-Proxy-Kette und das Entfernen beziehungsweise Überschreiben fremder Header müssen vor Veröffentlichung geprüft werden. [Render-Standardvariablen](https://render.com/docs/environment-variables). [Uvicorn: Proxy-Vertrauen](https://uvicorn.dev/deployment/#proxies-and-forwarded-headers).
+
+Nach Abhängigkeitsupdates die Auflösung in einer frischen Python-3.12-Umgebung erstellen, beide Lockdateien prüfen, Registry-Audits sowie Backendtests, Oberflächentests und Produktionsbuild ausführen. Keine pauschalen Major-Upgrades mit `npm audit fix --force`.
