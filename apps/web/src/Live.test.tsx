@@ -13,6 +13,12 @@ function backend(authenticated = true, connected = false) {
     if (url === '/api/session') body = {authenticated:loggedIn};
     else if (url === '/api/login') {loggedIn=true; body={authenticated:true};}
     else if (url === '/api/logout') {loggedIn=false; return new Response(null,{status:204});}
+    else if (url.startsWith('/api/patterns?')) {
+      const params = new URL(url, 'http://localhost').searchParams;
+      const days = Number(params.get('days') ?? 90), outcome = params.get('outcome') ?? 'sleep';
+      body = {days, outcome, from:days === 30 ? '2026-09-26' : '2026-07-28', to:'2026-10-25', activity_from:days === 30 ? '2026-09-25' : '2026-07-27', activity_to:'2026-10-24', timezone:'Europe/Zurich', unit:outcome === 'ans' ? 'ANS' : 'min', threshold:null, status:'insufficient', minimum_group_size:7, groups:{lower:{count:0,median:null,q1:null,q3:null},upper:{count:0,median:null,q1:null,q3:null}}, pairs:[], exclusions:{activity_unavailable:0,activity_provisional:0,outcome_unavailable:0}};
+    }
+
     else if (url.startsWith('/api/analytics?')) body={days:30,from:'2026-09-06',to:'2026-10-05',timezone:'Europe/Zurich',series:[]};
     else if (url === '/api/dashboard') body={connected,last_sync:null,sources:[source]};
     else if (url === '/api/sync') body={run_id:'run-1',status:'running'};
@@ -205,7 +211,56 @@ describe('private live dashboard', () => {
     expect(screen.getByText('actual-hash')).toBeVisible();expect(screen.queryByText('stale-response-hash')).not.toBeInTheDocument();
   });
 
-  it('treats logout 401 as signed out and purges private state while aborting inflight requests', async()=>{
+    it('closes and clears the private inspector when pattern analysis returns 401', async () => {
+    const {requests,fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
+    let finishPatterns!:(response:Response)=>void;
+    fetcher.mockImplementation(async(url,init)=> {
+      if(url.startsWith('/api/patterns?')) { requests.push({url,init}); return new Promise<Response>(resolve=>{finishPatterns=resolve;}); }
+      return fallback(url,init);
+    });
+    render(<App/>);
+    await screen.findByText('Erfolgreich leer',{selector:'.badge'});
+    await waitFor(()=>expect(requests.some(request=>request.url.startsWith('/api/patterns?'))).toBe(true));
+    openSources(); fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
+    expect(await within(dialog).findByText('actual-hash')).toBeVisible();
+    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('list');
+    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveTextContent('list');
+
+    await act(async()=>{finishPatterns(new Response(JSON.stringify({detail:'Anmeldung erforderlich'}),{status:401,headers:{'Content-Type':'application/json'}}));});
+    await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
+    expect(screen.queryByText('Antwort 1 von 2 · list')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
+    expect(screen.queryByText('Antwort 1 von 2 · list')).not.toBeInTheDocument();
+  });
+
+  it('closes a private source inspector while a pending patterns request returns 401', async () => {
+    const {requests,fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
+    let finishPatterns!:(response:Response)=>void;
+    const analytics={days:7,from:'2026-10-01',to:'2026-10-07',timezone:'Europe/Zurich',series:[{key:'heart',label:'Herzfrequenz',unit:'bpm',kind:'line',source_path:'/continuous-samples',coverage:{valid_days:1,total_days:7},points:[{date:'2026-10-03',value:70,provisional:false,response_ids:['private-pattern-source-id']}],feedback:[]}]};
+    fetcher.mockImplementation(async(url,init)=> {
+      if(url.startsWith('/api/patterns?')) { requests.push({url,init}); return new Promise<Response>(resolve=>{finishPatterns=resolve;}); }
+      if(url.startsWith('/api/analytics?')) return new Response(JSON.stringify(analytics),{status:200});
+      return fallback(url,init);
+    });
+    render(<App/>);
+    const heart=await screen.findByRole('region',{name:'Herzfrequenz'});
+    await waitFor(()=>expect(requests.some(request=>request.url.startsWith('/api/patterns?'))).toBe(true));
+    fireEvent.change(within(heart).getByRole('combobox',{name:'Tageswert Herzfrequenz'}),{target:{value:'2026-10-03'}});
+    fireEvent.click(within(heart).getByText('Messdetails ansehen'));
+    fireEvent.click(await within(heart).findByRole('button',{name:'Originalantwort ansehen'}));
+    const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
+    expect(await within(dialog).findByText('actual-hash')).toBeVisible();
+    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('private-pattern-source-id');
+
+    await act(async()=>{finishPatterns(new Response(JSON.stringify({detail:'Anmeldung erforderlich'}),{status:401,headers:{'Content-Type':'application/json'}}));});
+    await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
+    expect(screen.queryByText('Antwort 1 von 1 · private-pattern-source-id')).not.toBeInTheDocument();
+  });
+it('treats logout 401 as signed out and purges private state while aborting inflight requests', async()=>{
     vi.useFakeTimers();const {requests,fetcher}=backend(true,true);const fallback=fetcher.getMockImplementation()!;
     let finishPoll:(response:Response)=>void=()=>{};
     fetcher.mockImplementation(async(url,init)=>{

@@ -1,5 +1,9 @@
 # Polar Health Analytics
 
+**Live deployment:** [polarhealth.onrender.com](https://polarhealth.onrender.com/)
+
+**Recovery Lab demo:** [Open the public demo](https://polarhealth.onrender.com/demo)
+
 Stand: 10. Oktober 2026. Polar-Daten werden unverändert archiviert und daraus verständliche Tagesrückmeldungen und persönliche Verläufe abgeleitet.
 
 Dashboard und FastAPI-Backend sind implementiert: privater Besitzerzugang, serverseitiges Polar-OAuth, verschluesselte Tokens, unveraenderte Rohdaten in MongoDB/GridFS sowie Collector fuer 19 ausgewählte Datenbereiche. Polar ist verbunden; echte Originalantworten wurden am 7. Oktober 2026 erfolgreich archiviert. Profilbild und Profilreihenfolge wurden auf Nutzerwunsch entfernt. Zugangsdaten liegen ausschliesslich in der ignorierten lokalen Konfiguration.
@@ -62,7 +66,17 @@ npm --prefix apps/web test
 npm --prefix apps/web run build
 ```
 
-Tests verwenden ausschliesslich simulierte Polar-/MongoDB-Daten. `render.yaml` baut Frontend und Backend und aktiviert Deploys von `main`. Einrichtung, Secrets und Polar-Callback stehen in [der Render-Anleitung](docs/RUNNING.md#auf-render-von-main-deployen). Eine Bereitstellung wurde noch nicht ausgeführt. Ein Neustart kann einen laufenden Sync unterbrechen; bereits gespeicherte Originalantworten bleiben erhalten. Nach einem abrupten Prozessende wird die verlorene Sperre spaetestens nach 90 Sekunden wieder verfuegbar.
+Tests verwenden ausschliesslich simulierte Polar-/MongoDB-Daten. Die bestehende Anwendung ist unter [polarhealth.onrender.com](https://polarhealth.onrender.com/) erreichbar. `render.yaml` baut Frontend und Backend und aktiviert Deploys von `main`; Einrichtung, Secrets und Polar-Callback stehen in [der Render-Anleitung](docs/RUNNING.md#auf-render-von-main-deployen). Ein Neustart kann einen laufenden Sync unterbrechen; bereits gespeicherte Originalantworten bleiben erhalten. Nach einem abrupten Prozessende wird die verlorene Sperre spaetestens nach 90 Sekunden wieder verfuegbar.
+
+## Öffentliches Recovery Lab
+
+Die [öffentliche Demo](https://polarhealth.onrender.com/demo) bietet den Bewegungsvergleich ohne Anmeldung. Er verwendet vier fest datierte, synthetische Fixtures vom 3. Juli bis 30. September 2026. Die 30-/90-Tage- und Schlaf-/ANS-Auswahl arbeitet vollständig im Browser; sie fragt weder Sitzung, Dashboard, Sync noch Polar-Daten ab. Alle Beispielquellen sind vor dem Bündeln entfernt.
+
+Die Fixtures erzeugt `PYTHONPATH=apps/api .venv/bin/python scripts/generate_pattern_demo.py`. Der Generator erstellt synthetische normalisierte Tagespunkte und verwendet dieselbe reine `calculate_patterns`-Funktion wie das Backend. Der private Datenfluss bleibt getrennt: erfolgreiche Rohantworten → vorhandene Tageskorrektur und Normalisierung → geschütztes, nur lesendes `GET /api/patterns` → gemeinsame `PatternExplorer`-Ansicht. Öffentliche Demo und private Oberfläche teilen nur die Darstellung.
+
+Verglichen werden Bewegungstage mit der folgenden Zürcher Kalendernacht. Die Schritt-Grenze ist der Median aller verfügbaren, nicht vorläufigen Bewegungstage im gewählten verschobenen Zeitraum, unabhängig von verfügbaren Nachtwerten. Schlaf wird in Minuten, ANS als Messwert dargestellt. Null Schritte bleiben gültig; fehlende und vorläufige Tage werden getrennt ausgewiesen. Gruppenmediane und Quartile erscheinen erst ab sieben vollständigen Nächten je Gruppe. Das ist eine Beobachtung ohne Kausalaussage, Tragezeitnachweis, Prognose oder medizinische Empfehlung.
+
+Private Paare benötigen vollständige, gültige Archivmessungen; die aktuelle Abdeckung ist hier nicht verifiziert. Die öffentliche Demo verwendet synthetische Daten und ersetzt keine fehlenden privaten Messungen. Details stehen in [ANALYTICS.md](docs/ANALYTICS.md).
 
 ## Verläufe und persönlicher Vergleich
 

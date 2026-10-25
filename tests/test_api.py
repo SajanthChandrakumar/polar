@@ -1,5 +1,7 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs, urlparse
+from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
@@ -9,20 +11,28 @@ from fastapi.testclient import TestClient
 from test_store import make_store
 
 
-def build_client(transport=None, collector=None):
+def build_client(transport=None, collector=None, store=None, client=('testclient', 50000), secure=False):
     from polar_api.app import create_app
     from polar_api.config import Settings
+    origin = 'https://polar.example' if secure else 'http://testserver'
     settings = Settings(owner_password='test-password-only', session_secret='x' * 40,
                         token_encryption_key=Fernet.generate_key().decode(), client_id='test-client',
-                        client_secret='test-secret', public_url='http://testserver',
-                        redirect_uri='http://testserver/oauth2_callback')
-    store = make_store()
+                        client_secret='test-secret', public_url=origin,
+                        redirect_uri=origin + '/oauth2_callback')
+    store = store or make_store()
     app = create_app(settings, store, transport=transport, collector=collector)
-    return TestClient(app), store
+    return TestClient(app, client=client, base_url=origin), store
 
 
 def login(client):
     return client.post('/api/login', json={'password': 'test-password-only'}, headers={'Origin': 'http://testserver'})
+
+
+def freeze_login_time(monkeypatch):
+    from polar_api import auth as auth_module
+    current = [datetime(2035, 1, 1, tzinfo=timezone.utc)]
+    monkeypatch.setattr(auth_module, 'now', lambda: current[0])
+    return current
 
 
 def test_health_checks_database_and_frontend_without_login_or_collection(tmp_path, monkeypatch):
@@ -63,13 +73,194 @@ def test_private_session_same_origin_and_logout_invalidates_cookie():
     assert client.get('/api/dashboard').status_code == 401
 
 
-def test_login_throttles_wrong_password_without_leaking():
-    client, _ = build_client()
+def test_login_throttles_wrong_password_from_same_client_without_leaking(monkeypatch):
+    freeze_login_time(monkeypatch)
+    client, _ = build_client(client=('198.51.100.10', 1234))
     for _ in range(5):
         assert client.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
     response = login(client)
     assert response.status_code == 429
     assert 'test-password' not in response.text
+
+
+def test_login_limit_isolated_by_client_address(monkeypatch):
+    freeze_login_time(monkeypatch)
+    attacker, store = build_client(client=('198.51.100.10', 1234))
+    owner, _ = build_client(store=store, client=('198.51.100.11', 1234))
+    for _ in range(5):
+        assert attacker.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(attacker).status_code == 429
+    assert login(owner).status_code == 200
+
+
+def test_login_limit_ignores_spoofed_forwarding_headers(monkeypatch):
+    freeze_login_time(monkeypatch)
+    client, _ = build_client(client=('198.51.100.10', 1234))
+    for index in range(5):
+        response = client.post('/api/login', json={'password': 'wrong'}, headers={
+            'Origin': 'http://testserver',
+            'X-Forwarded-For': f'203.0.113.{index + 1}',
+            'Forwarded': f'for=203.0.113.{index + 1}',
+        })
+        assert response.status_code == 401
+    assert login(client).status_code == 429
+
+
+def test_render_login_budget_uses_cf_ip_across_peers_and_ignores_xff(monkeypatch):
+    monkeypatch.setenv('RENDER', 'true')
+    freeze_login_time(monkeypatch)
+    first, store = build_client(secure=True, client=('198.51.100.10', 1234))
+    second, _ = build_client(store=store, secure=True, client=('198.51.100.11', 5678))
+
+    for index in range(5):
+        response = first.post('/api/login', json={'password': 'wrong'}, headers={
+            'Origin': 'https://polar.example',
+            'CF-Connecting-IP': '203.0.113.7',
+            'X-Forwarded-For': f'192.0.2.{index + 1}',
+        })
+        assert response.status_code == 401
+
+    response = second.post('/api/login', json={'password': 'wrong'}, headers={
+        'Origin': 'https://polar.example',
+        'CF-Connecting-IP': '203.0.113.7',
+        'X-Forwarded-For': '192.0.2.99',
+    })
+
+    assert response.status_code == 429
+    saved = repr(list(store.db.login_limits.find({})))
+    assert '203.0.113.7' not in saved
+    assert '192.0.2.' not in saved
+
+
+def test_render_login_budgets_isolate_distinct_cf_ips_behind_one_peer(monkeypatch):
+    monkeypatch.setenv('RENDER', 'true')
+    freeze_login_time(monkeypatch)
+    first, store = build_client(secure=True, client=('198.51.100.10', 1234))
+    second, _ = build_client(store=store, secure=True, client=('198.51.100.10', 5678))
+
+    for _ in range(5):
+        assert first.post('/api/login', json={'password': 'wrong'}, headers={
+            'Origin': 'https://polar.example', 'CF-Connecting-IP': '203.0.113.10',
+        }).status_code == 401
+
+    response = second.post('/api/login', json={'password': 'test-password-only'}, headers={
+        'Origin': 'https://polar.example', 'CF-Connecting-IP': '203.0.113.11',
+    })
+
+    assert response.status_code == 200
+    assert store.db.login_limits.count_documents({}) == 2
+    assert store.db.sessions.count_documents({}) == 1
+
+
+@pytest.mark.parametrize('cf_values', [
+    None,
+    ('not-an-ip',),
+    ('203.0.113.10, 203.0.113.11',),
+    ('203.0.113.10', '203.0.113.11'),
+])
+def test_render_login_rejects_missing_or_invalid_cf_ip_without_writes(monkeypatch, cf_values):
+    monkeypatch.setenv('RENDER', 'true')
+    client, store = build_client(secure=True, client=('198.51.100.10', 1234))
+    before = {
+        name: store.db[name].count_documents({})
+        for name in store.db.list_collection_names()
+    }
+    headers = [('Origin', 'https://polar.example')]
+    if cf_values is not None:
+        headers.extend(('CF-Connecting-IP', value) for value in cf_values)
+
+    response = client.post('/api/login', json={'password': 'wrong'}, headers=headers)
+
+    assert response.status_code == 503
+    assert response.json() == {'detail': 'Anmeldung derzeit nicht verfügbar.'}
+    assert all(value not in response.text for value in (cf_values or ()) if value)
+    assert store.db.login_limits.count_documents({}) == 0
+    assert store.db.sessions.count_documents({}) == 0
+    assert {
+        name: store.db[name].count_documents({})
+        for name in store.db.list_collection_names()
+    } == before
+
+
+def test_render_login_normalizes_equivalent_ipv6_cf_addresses(monkeypatch):
+    monkeypatch.setenv('RENDER', 'true')
+    freeze_login_time(monkeypatch)
+    first, store = build_client(secure=True, client=('198.51.100.10', 1234))
+    second, _ = build_client(store=store, secure=True, client=('198.51.100.11', 5678))
+
+    for _ in range(5):
+        assert first.post('/api/login', json={'password': 'wrong'}, headers={
+            'Origin': 'https://polar.example',
+            'CF-Connecting-IP': '2001:0db8:0000:0000:0000:0000:0000:0001',
+        }).status_code == 401
+
+    response = second.post('/api/login', json={'password': 'wrong'}, headers={
+        'Origin': 'https://polar.example', 'CF-Connecting-IP': '2001:db8::1',
+    })
+
+    assert response.status_code == 429
+    assert store.db.login_limits.count_documents({}) == 1
+
+
+def test_local_login_ignores_cf_ip_and_keeps_asgi_peer_budgets(monkeypatch):
+    monkeypatch.delenv('RENDER', raising=False)
+    freeze_login_time(monkeypatch)
+    first, store = build_client(client=('198.51.100.10', 1234))
+    second, _ = build_client(store=store, client=('198.51.100.11', 5678))
+
+    for _ in range(5):
+        assert first.post('/api/login', json={'password': 'wrong'}, headers={
+            'Origin': 'http://testserver', 'CF-Connecting-IP': '203.0.113.50',
+        }).status_code == 401
+
+    response = second.post('/api/login', json={'password': 'test-password-only'}, headers={
+        'Origin': 'http://testserver', 'CF-Connecting-IP': '203.0.113.50',
+    })
+
+    assert response.status_code == 200
+    assert store.db.login_limits.count_documents({}) == 2
+
+
+def test_login_limit_resets_for_same_client_in_next_minute(monkeypatch):
+    current = freeze_login_time(monkeypatch)
+    client, _ = build_client(client=('198.51.100.10', 1234))
+    for _ in range(5):
+        assert client.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(client).status_code == 429
+    current[0] += timedelta(minutes=1)
+    assert login(client).status_code == 200
+
+
+def test_login_limit_is_shared_by_app_instances_through_database(monkeypatch):
+    freeze_login_time(monkeypatch)
+    store = make_store()
+    first, _ = build_client(store=store, client=('198.51.100.10', 1234))
+    second, _ = build_client(store=store, client=('198.51.100.10', 5678))
+    for _ in range(5):
+        assert first.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(second).status_code == 429
+    assert store.db.login_limits.count_documents({}) == 1
+
+
+def test_login_requests_without_client_share_the_fallback_budget(monkeypatch):
+    freeze_login_time(monkeypatch)
+    store = make_store()
+    first, _ = build_client(store=store, client=None)
+    second, _ = build_client(store=store, client=None)
+    for _ in range(5):
+        assert first.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    assert login(first).status_code == 429
+    assert login(second).status_code == 429
+    assert store.db.login_limits.count_documents({}) == 1
+
+
+def test_login_limit_database_key_does_not_store_client_ip(monkeypatch):
+    freeze_login_time(monkeypatch)
+    client, store = build_client(client=('203.0.113.77', 1234))
+    assert client.post('/api/login', json={'password': 'wrong'}, headers={'Origin': 'http://testserver'}).status_code == 401
+    saved = list(store.db.login_limits.find({}))
+    assert len(saved) == 1
+    assert '203.0.113.77' not in repr(saved[0])
 
 
 def test_oauth_state_is_single_use_session_bound_and_tokens_private():
@@ -220,7 +411,9 @@ def test_render_requires_https_origin_and_secure_session_cookie(monkeypatch):
     settings.validate()
     from polar_api.app import create_app
     client = TestClient(create_app(settings, make_store()), base_url='https://polar.example')
-    response = client.post('/api/login', json={'password': 'test-password-only'}, headers={'Origin': 'https://polar.example'})
+    response = client.post('/api/login', json={'password': 'test-password-only'}, headers={
+        'Origin': 'https://polar.example', 'CF-Connecting-IP': '203.0.113.55',
+    })
     assert response.status_code == 200
     assert 'Secure' in response.headers['set-cookie']
     assert 'HttpOnly' in response.headers['set-cookie']
@@ -276,3 +469,53 @@ def test_analytics_is_private_validates_ranges_and_does_not_collect():
         assert all(point['value'] is None for series in data['series'] for point in series['points'])
     assert store.db.sync_runs.count_documents({}) == 0
     assert store.db.raw_api_responses.count_documents({}) == 0
+
+
+def test_patterns_route_is_private_and_does_not_collect_or_write_archive_data():
+    def unexpected_collection(*args, **kwargs):
+        pytest.fail('patterns GET must never collect Polar data')
+
+    client, store = build_client(collector=unexpected_collection)
+    assert client.get('/api/patterns').status_code == 401
+    login(client)
+    before_runs = store.db.sync_runs.count_documents({})
+    before_responses = store.db.raw_api_responses.count_documents({})
+    before_limits = store.db.login_limits.count_documents({})
+    before_database = {
+        name: store.db[name].count_documents({})
+        for name in store.db.list_collection_names()
+    }
+
+    response = client.get('/api/patterns')
+
+    assert response.status_code == 200
+    today = datetime.now(ZoneInfo('Europe/Zurich')).date()
+    start = today - timedelta(days=89)
+    assert response.json() == {
+        'days': 90, 'outcome': 'sleep', 'from': start.isoformat(), 'to': today.isoformat(),
+        'activity_from': (start - timedelta(days=1)).isoformat(),
+        'activity_to': (today - timedelta(days=1)).isoformat(),
+        'timezone': 'Europe/Zurich', 'unit': 'min', 'threshold': None,
+        'status': 'insufficient', 'minimum_group_size': 7,
+        'groups': {
+            'lower': {'count': 0, 'median': None, 'q1': None, 'q3': None},
+            'upper': {'count': 0, 'median': None, 'q1': None, 'q3': None},
+        },
+        'pairs': [],
+        'exclusions': {'activity_unavailable': 90, 'activity_provisional': 0, 'outcome_unavailable': 0},
+    }
+    assert store.db.sync_runs.count_documents({}) == before_runs == 0
+    assert store.db.raw_api_responses.count_documents({}) == before_responses == 0
+    assert store.db.login_limits.count_documents({}) == before_limits
+    assert {
+        name: store.db[name].count_documents({})
+        for name in store.db.list_collection_names()
+    } == before_database
+
+
+def test_patterns_route_rejects_unsupported_days_and_outcomes_with_422():
+    client, _ = build_client()
+    login(client)
+
+    assert client.get('/api/patterns?days=8').status_code == 422
+    assert client.get('/api/patterns?outcome=training').status_code == 422

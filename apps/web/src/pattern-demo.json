@@ -1,0 +1,2073 @@
+{
+  "30_sleep": {
+    "days": 30,
+    "outcome": "sleep",
+    "from": "2026-09-01",
+    "to": "2026-09-30",
+    "activity_from": "2026-08-31",
+    "activity_to": "2026-09-29",
+    "timezone": "Europe/Zurich",
+    "unit": "min",
+    "threshold": 7188.5,
+    "status": "available",
+    "minimum_group_size": 7,
+    "groups": {
+      "lower": {
+        "count": 14,
+        "median": 430.5,
+        "q1": 400.75,
+        "q3": 452.75
+      },
+      "upper": {
+        "count": 13,
+        "median": 415,
+        "q1": 392.0,
+        "q3": 451.0
+      }
+    },
+    "pairs": [
+      {
+        "activity_date": "2026-08-31",
+        "outcome_date": "2026-09-01",
+        "steps": 4540,
+        "value": 420,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-01",
+        "outcome_date": "2026-09-02",
+        "steps": 5919,
+        "value": 443,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-02",
+        "outcome_date": "2026-09-03",
+        "steps": 7298,
+        "value": 466,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-03",
+        "outcome_date": "2026-09-04",
+        "steps": 8677,
+        "value": 369,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-04",
+        "outcome_date": "2026-09-05",
+        "steps": 10056,
+        "value": 392,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-05",
+        "outcome_date": "2026-09-06",
+        "steps": 11435,
+        "value": 415,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-06",
+        "outcome_date": "2026-09-07",
+        "steps": 3814,
+        "value": 438,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-07",
+        "outcome_date": "2026-09-08",
+        "steps": 0,
+        "value": 461,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-08",
+        "outcome_date": "2026-09-09",
+        "steps": 6572,
+        "value": 364,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-09",
+        "outcome_date": "2026-09-10",
+        "steps": 7951,
+        "value": 387,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-10",
+        "outcome_date": "2026-09-11",
+        "steps": 9330,
+        "value": 410,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-11",
+        "outcome_date": "2026-09-12",
+        "steps": 10709,
+        "value": 433,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-12",
+        "outcome_date": "2026-09-13",
+        "steps": 3088,
+        "value": 456,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-13",
+        "outcome_date": "2026-09-14",
+        "steps": 4467,
+        "value": 479,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-14",
+        "outcome_date": "2026-09-15",
+        "steps": 5846,
+        "value": 382,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-15",
+        "outcome_date": "2026-09-16",
+        "steps": 7225,
+        "value": 405,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-17",
+        "outcome_date": "2026-09-18",
+        "steps": 9983,
+        "value": 451,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-18",
+        "outcome_date": "2026-09-19",
+        "steps": 11362,
+        "value": 474,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-19",
+        "outcome_date": "2026-09-20",
+        "steps": 3741,
+        "value": 377,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-21",
+        "outcome_date": "2026-09-22",
+        "steps": 6499,
+        "value": 423,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-22",
+        "outcome_date": "2026-09-23",
+        "steps": 7878,
+        "value": 446,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-23",
+        "outcome_date": "2026-09-24",
+        "steps": 9257,
+        "value": 469,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-25",
+        "outcome_date": "2026-09-26",
+        "steps": 3015,
+        "value": 395,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-26",
+        "outcome_date": "2026-09-27",
+        "steps": 4394,
+        "value": 418,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-27",
+        "outcome_date": "2026-09-28",
+        "steps": 5773,
+        "value": 441,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-28",
+        "outcome_date": "2026-09-29",
+        "steps": 7152,
+        "value": 464,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-29",
+        "outcome_date": "2026-09-30",
+        "steps": 8531,
+        "value": 367,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      }
+    ],
+    "exclusions": {
+      "activity_unavailable": 1,
+      "activity_provisional": 1,
+      "outcome_unavailable": 1
+    }
+  },
+  "30_ans": {
+    "days": 30,
+    "outcome": "ans",
+    "from": "2026-09-01",
+    "to": "2026-09-30",
+    "activity_from": "2026-08-31",
+    "activity_to": "2026-09-29",
+    "timezone": "Europe/Zurich",
+    "unit": "ANS",
+    "threshold": 7188.5,
+    "status": "available",
+    "minimum_group_size": 7,
+    "groups": {
+      "lower": {
+        "count": 12,
+        "median": -0.2,
+        "q1": -1.85,
+        "q3": 1.1
+      },
+      "upper": {
+        "count": 14,
+        "median": -0.75,
+        "q1": -2.0,
+        "q3": 0.425
+      }
+    },
+    "pairs": [
+      {
+        "activity_date": "2026-08-31",
+        "outcome_date": "2026-09-01",
+        "steps": 4540,
+        "value": 1.0,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-02",
+        "outcome_date": "2026-09-03",
+        "steps": 7298,
+        "value": -2.1,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-03",
+        "outcome_date": "2026-09-04",
+        "steps": 8677,
+        "value": -0.4,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-04",
+        "outcome_date": "2026-09-05",
+        "steps": 10056,
+        "value": 1.3,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-05",
+        "outcome_date": "2026-09-06",
+        "steps": 11435,
+        "value": -3.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-06",
+        "outcome_date": "2026-09-07",
+        "steps": 3814,
+        "value": -1.8,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-07",
+        "outcome_date": "2026-09-08",
+        "steps": 0,
+        "value": -0.1,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-08",
+        "outcome_date": "2026-09-09",
+        "steps": 6572,
+        "value": 1.6,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-09",
+        "outcome_date": "2026-09-10",
+        "steps": 7951,
+        "value": -3.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-10",
+        "outcome_date": "2026-09-11",
+        "steps": 9330,
+        "value": -1.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-11",
+        "outcome_date": "2026-09-12",
+        "steps": 10709,
+        "value": 0.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-12",
+        "outcome_date": "2026-09-13",
+        "steps": 3088,
+        "value": 1.9,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-13",
+        "outcome_date": "2026-09-14",
+        "steps": 4467,
+        "value": -2.9,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-14",
+        "outcome_date": "2026-09-15",
+        "steps": 5846,
+        "value": -1.2,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-15",
+        "outcome_date": "2026-09-16",
+        "steps": 7225,
+        "value": 0.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-17",
+        "outcome_date": "2026-09-18",
+        "steps": 9983,
+        "value": -2.6,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-18",
+        "outcome_date": "2026-09-19",
+        "steps": 11362,
+        "value": -0.9,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-19",
+        "outcome_date": "2026-09-20",
+        "steps": 3741,
+        "value": 0.8,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-21",
+        "outcome_date": "2026-09-22",
+        "steps": 6499,
+        "value": -2.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-22",
+        "outcome_date": "2026-09-23",
+        "steps": 7878,
+        "value": -0.6,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-23",
+        "outcome_date": "2026-09-24",
+        "steps": 9257,
+        "value": 1.1,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-24",
+        "outcome_date": "2026-09-25",
+        "steps": 10636,
+        "value": 2.8,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-25",
+        "outcome_date": "2026-09-26",
+        "steps": 3015,
+        "value": -2.0,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-26",
+        "outcome_date": "2026-09-27",
+        "steps": 4394,
+        "value": -0.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-27",
+        "outcome_date": "2026-09-28",
+        "steps": 5773,
+        "value": 1.4,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-29",
+        "outcome_date": "2026-09-30",
+        "steps": 8531,
+        "value": -1.7,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      }
+    ],
+    "exclusions": {
+      "activity_unavailable": 1,
+      "activity_provisional": 1,
+      "outcome_unavailable": 2
+    }
+  },
+  "90_sleep": {
+    "days": 90,
+    "outcome": "sleep",
+    "from": "2026-07-03",
+    "to": "2026-09-30",
+    "activity_from": "2026-07-02",
+    "activity_to": "2026-09-29",
+    "timezone": "Europe/Zurich",
+    "unit": "min",
+    "threshold": 7188.5,
+    "status": "available",
+    "minimum_group_size": 7,
+    "groups": {
+      "lower": {
+        "count": 41,
+        "median": 422,
+        "q1": 384.0,
+        "q3": 443.0
+      },
+      "upper": {
+        "count": 40,
+        "median": 424.5,
+        "q1": 395.0,
+        "q3": 453.5
+      }
+    },
+    "pairs": [
+      {
+        "activity_date": "2026-07-02",
+        "outcome_date": "2026-07-03",
+        "steps": 0,
+        "value": 360,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-03",
+        "outcome_date": "2026-07-04",
+        "steps": 4179,
+        "value": 383,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-04",
+        "outcome_date": "2026-07-05",
+        "steps": 5558,
+        "value": 406,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-05",
+        "outcome_date": "2026-07-06",
+        "steps": 6937,
+        "value": 429,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-06",
+        "outcome_date": "2026-07-07",
+        "steps": 8316,
+        "value": 452,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-07",
+        "outcome_date": "2026-07-08",
+        "steps": 9695,
+        "value": 475,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-08",
+        "outcome_date": "2026-07-09",
+        "steps": 11074,
+        "value": 378,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-10",
+        "outcome_date": "2026-07-11",
+        "steps": 4832,
+        "value": 424,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-11",
+        "outcome_date": "2026-07-12",
+        "steps": 6211,
+        "value": 447,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-13",
+        "outcome_date": "2026-07-14",
+        "steps": 8969,
+        "value": 373,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-14",
+        "outcome_date": "2026-07-15",
+        "steps": 10348,
+        "value": 396,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-15",
+        "outcome_date": "2026-07-16",
+        "steps": 11727,
+        "value": 419,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-16",
+        "outcome_date": "2026-07-17",
+        "steps": 4106,
+        "value": 442,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-17",
+        "outcome_date": "2026-07-18",
+        "steps": 5485,
+        "value": 465,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-19",
+        "outcome_date": "2026-07-20",
+        "steps": 8243,
+        "value": 391,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-20",
+        "outcome_date": "2026-07-21",
+        "steps": 9622,
+        "value": 414,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-21",
+        "outcome_date": "2026-07-22",
+        "steps": 11001,
+        "value": 437,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-22",
+        "outcome_date": "2026-07-23",
+        "steps": 3380,
+        "value": 460,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-23",
+        "outcome_date": "2026-07-24",
+        "steps": 4759,
+        "value": 363,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-24",
+        "outcome_date": "2026-07-25",
+        "steps": 6138,
+        "value": 386,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-25",
+        "outcome_date": "2026-07-26",
+        "steps": 7517,
+        "value": 409,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-26",
+        "outcome_date": "2026-07-27",
+        "steps": 8896,
+        "value": 432,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-27",
+        "outcome_date": "2026-07-28",
+        "steps": 10275,
+        "value": 455,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-28",
+        "outcome_date": "2026-07-29",
+        "steps": 11654,
+        "value": 478,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-29",
+        "outcome_date": "2026-07-30",
+        "steps": 4033,
+        "value": 381,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-30",
+        "outcome_date": "2026-07-31",
+        "steps": 5412,
+        "value": 404,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-31",
+        "outcome_date": "2026-08-01",
+        "steps": 6791,
+        "value": 427,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-01",
+        "outcome_date": "2026-08-02",
+        "steps": 8170,
+        "value": 450,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-02",
+        "outcome_date": "2026-08-03",
+        "steps": 9549,
+        "value": 473,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-03",
+        "outcome_date": "2026-08-04",
+        "steps": 10928,
+        "value": 376,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-04",
+        "outcome_date": "2026-08-05",
+        "steps": 3307,
+        "value": 399,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-05",
+        "outcome_date": "2026-08-06",
+        "steps": 4686,
+        "value": 422,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-06",
+        "outcome_date": "2026-08-07",
+        "steps": 6065,
+        "value": 445,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-07",
+        "outcome_date": "2026-08-08",
+        "steps": 7444,
+        "value": 468,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-08",
+        "outcome_date": "2026-08-09",
+        "steps": 8823,
+        "value": 371,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-10",
+        "outcome_date": "2026-08-11",
+        "steps": 11581,
+        "value": 417,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-11",
+        "outcome_date": "2026-08-12",
+        "steps": 3960,
+        "value": 440,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-12",
+        "outcome_date": "2026-08-13",
+        "steps": 5339,
+        "value": 463,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-13",
+        "outcome_date": "2026-08-14",
+        "steps": 6718,
+        "value": 366,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-15",
+        "outcome_date": "2026-08-16",
+        "steps": 9476,
+        "value": 412,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-16",
+        "outcome_date": "2026-08-17",
+        "steps": 10855,
+        "value": 435,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-17",
+        "outcome_date": "2026-08-18",
+        "steps": 3234,
+        "value": 458,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-18",
+        "outcome_date": "2026-08-19",
+        "steps": 4613,
+        "value": 361,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-19",
+        "outcome_date": "2026-08-20",
+        "steps": 5992,
+        "value": 384,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-20",
+        "outcome_date": "2026-08-21",
+        "steps": 7371,
+        "value": 407,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-21",
+        "outcome_date": "2026-08-22",
+        "steps": 8750,
+        "value": 430,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-22",
+        "outcome_date": "2026-08-23",
+        "steps": 10129,
+        "value": 453,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-23",
+        "outcome_date": "2026-08-24",
+        "steps": 11508,
+        "value": 476,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-24",
+        "outcome_date": "2026-08-25",
+        "steps": 3887,
+        "value": 379,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-25",
+        "outcome_date": "2026-08-26",
+        "steps": 5266,
+        "value": 402,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-26",
+        "outcome_date": "2026-08-27",
+        "steps": 6645,
+        "value": 425,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-28",
+        "outcome_date": "2026-08-29",
+        "steps": 9403,
+        "value": 471,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-29",
+        "outcome_date": "2026-08-30",
+        "steps": 10782,
+        "value": 374,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-30",
+        "outcome_date": "2026-08-31",
+        "steps": 3161,
+        "value": 397,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-31",
+        "outcome_date": "2026-09-01",
+        "steps": 4540,
+        "value": 420,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-01",
+        "outcome_date": "2026-09-02",
+        "steps": 5919,
+        "value": 443,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-02",
+        "outcome_date": "2026-09-03",
+        "steps": 7298,
+        "value": 466,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-03",
+        "outcome_date": "2026-09-04",
+        "steps": 8677,
+        "value": 369,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-04",
+        "outcome_date": "2026-09-05",
+        "steps": 10056,
+        "value": 392,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-05",
+        "outcome_date": "2026-09-06",
+        "steps": 11435,
+        "value": 415,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-06",
+        "outcome_date": "2026-09-07",
+        "steps": 3814,
+        "value": 438,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-07",
+        "outcome_date": "2026-09-08",
+        "steps": 0,
+        "value": 461,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-08",
+        "outcome_date": "2026-09-09",
+        "steps": 6572,
+        "value": 364,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-09",
+        "outcome_date": "2026-09-10",
+        "steps": 7951,
+        "value": 387,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-10",
+        "outcome_date": "2026-09-11",
+        "steps": 9330,
+        "value": 410,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-11",
+        "outcome_date": "2026-09-12",
+        "steps": 10709,
+        "value": 433,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-12",
+        "outcome_date": "2026-09-13",
+        "steps": 3088,
+        "value": 456,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-13",
+        "outcome_date": "2026-09-14",
+        "steps": 4467,
+        "value": 479,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-14",
+        "outcome_date": "2026-09-15",
+        "steps": 5846,
+        "value": 382,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-15",
+        "outcome_date": "2026-09-16",
+        "steps": 7225,
+        "value": 405,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-17",
+        "outcome_date": "2026-09-18",
+        "steps": 9983,
+        "value": 451,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-18",
+        "outcome_date": "2026-09-19",
+        "steps": 11362,
+        "value": 474,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-19",
+        "outcome_date": "2026-09-20",
+        "steps": 3741,
+        "value": 377,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-21",
+        "outcome_date": "2026-09-22",
+        "steps": 6499,
+        "value": 423,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-22",
+        "outcome_date": "2026-09-23",
+        "steps": 7878,
+        "value": 446,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-23",
+        "outcome_date": "2026-09-24",
+        "steps": 9257,
+        "value": 469,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-25",
+        "outcome_date": "2026-09-26",
+        "steps": 3015,
+        "value": 395,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-26",
+        "outcome_date": "2026-09-27",
+        "steps": 4394,
+        "value": 418,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-27",
+        "outcome_date": "2026-09-28",
+        "steps": 5773,
+        "value": 441,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-28",
+        "outcome_date": "2026-09-29",
+        "steps": 7152,
+        "value": 464,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-29",
+        "outcome_date": "2026-09-30",
+        "steps": 8531,
+        "value": 367,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      }
+    ],
+    "exclusions": {
+      "activity_unavailable": 3,
+      "activity_provisional": 3,
+      "outcome_unavailable": 3
+    }
+  },
+  "90_ans": {
+    "days": 90,
+    "outcome": "ans",
+    "from": "2026-07-03",
+    "to": "2026-09-30",
+    "activity_from": "2026-07-02",
+    "activity_to": "2026-09-29",
+    "timezone": "Europe/Zurich",
+    "unit": "ANS",
+    "threshold": 7188.5,
+    "status": "available",
+    "minimum_group_size": 7,
+    "groups": {
+      "lower": {
+        "count": 39,
+        "median": -0.5,
+        "q1": -2.0,
+        "q3": 0.9
+      },
+      "upper": {
+        "count": 42,
+        "median": -0.6,
+        "q1": -2.0,
+        "q3": 1.05
+      }
+    },
+    "pairs": [
+      {
+        "activity_date": "2026-07-02",
+        "outcome_date": "2026-07-03",
+        "steps": 0,
+        "value": -3.5,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-03",
+        "outcome_date": "2026-07-04",
+        "steps": 4179,
+        "value": -1.8,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-04",
+        "outcome_date": "2026-07-05",
+        "steps": 5558,
+        "value": -0.1,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-05",
+        "outcome_date": "2026-07-06",
+        "steps": 6937,
+        "value": 1.6,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-06",
+        "outcome_date": "2026-07-07",
+        "steps": 8316,
+        "value": -3.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-07",
+        "outcome_date": "2026-07-08",
+        "steps": 9695,
+        "value": -1.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-08",
+        "outcome_date": "2026-07-09",
+        "steps": 11074,
+        "value": 0.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-10",
+        "outcome_date": "2026-07-11",
+        "steps": 4832,
+        "value": -2.9,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-11",
+        "outcome_date": "2026-07-12",
+        "steps": 6211,
+        "value": -1.2,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-13",
+        "outcome_date": "2026-07-14",
+        "steps": 8969,
+        "value": 2.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-14",
+        "outcome_date": "2026-07-15",
+        "steps": 10348,
+        "value": -2.6,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-15",
+        "outcome_date": "2026-07-16",
+        "steps": 11727,
+        "value": -0.9,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-16",
+        "outcome_date": "2026-07-17",
+        "steps": 4106,
+        "value": 0.8,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-17",
+        "outcome_date": "2026-07-18",
+        "steps": 5485,
+        "value": 2.5,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-18",
+        "outcome_date": "2026-07-19",
+        "steps": 6864,
+        "value": -2.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-19",
+        "outcome_date": "2026-07-20",
+        "steps": 8243,
+        "value": -0.6,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-20",
+        "outcome_date": "2026-07-21",
+        "steps": 9622,
+        "value": 1.1,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-21",
+        "outcome_date": "2026-07-22",
+        "steps": 11001,
+        "value": 2.8,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-22",
+        "outcome_date": "2026-07-23",
+        "steps": 3380,
+        "value": -2.0,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-23",
+        "outcome_date": "2026-07-24",
+        "steps": 4759,
+        "value": -0.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-25",
+        "outcome_date": "2026-07-26",
+        "steps": 7517,
+        "value": -3.4,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-26",
+        "outcome_date": "2026-07-27",
+        "steps": 8896,
+        "value": -1.7,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-27",
+        "outcome_date": "2026-07-28",
+        "steps": 10275,
+        "value": 0.0,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-28",
+        "outcome_date": "2026-07-29",
+        "steps": 11654,
+        "value": 1.7,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-29",
+        "outcome_date": "2026-07-30",
+        "steps": 4033,
+        "value": -3.1,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-30",
+        "outcome_date": "2026-07-31",
+        "steps": 5412,
+        "value": -1.4,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-07-31",
+        "outcome_date": "2026-08-01",
+        "steps": 6791,
+        "value": 0.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-01",
+        "outcome_date": "2026-08-02",
+        "steps": 8170,
+        "value": 2.0,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-02",
+        "outcome_date": "2026-08-03",
+        "steps": 9549,
+        "value": -2.8,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-03",
+        "outcome_date": "2026-08-04",
+        "steps": 10928,
+        "value": -1.1,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-04",
+        "outcome_date": "2026-08-05",
+        "steps": 3307,
+        "value": 0.6,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-05",
+        "outcome_date": "2026-08-06",
+        "steps": 4686,
+        "value": 2.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-06",
+        "outcome_date": "2026-08-07",
+        "steps": 6065,
+        "value": -2.5,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-07",
+        "outcome_date": "2026-08-08",
+        "steps": 7444,
+        "value": -0.8,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-08",
+        "outcome_date": "2026-08-09",
+        "steps": 8823,
+        "value": 0.9,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-10",
+        "outcome_date": "2026-08-11",
+        "steps": 11581,
+        "value": -2.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-11",
+        "outcome_date": "2026-08-12",
+        "steps": 3960,
+        "value": -0.5,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-12",
+        "outcome_date": "2026-08-13",
+        "steps": 5339,
+        "value": 1.2,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-13",
+        "outcome_date": "2026-08-14",
+        "steps": 6718,
+        "value": 2.9,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-15",
+        "outcome_date": "2026-08-16",
+        "steps": 9476,
+        "value": -0.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-16",
+        "outcome_date": "2026-08-17",
+        "steps": 10855,
+        "value": 1.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-17",
+        "outcome_date": "2026-08-18",
+        "steps": 3234,
+        "value": -3.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-18",
+        "outcome_date": "2026-08-19",
+        "steps": 4613,
+        "value": -1.6,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-19",
+        "outcome_date": "2026-08-20",
+        "steps": 5992,
+        "value": 0.1,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-20",
+        "outcome_date": "2026-08-21",
+        "steps": 7371,
+        "value": 1.8,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-21",
+        "outcome_date": "2026-08-22",
+        "steps": 8750,
+        "value": -3.0,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-22",
+        "outcome_date": "2026-08-23",
+        "steps": 10129,
+        "value": -1.3,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-23",
+        "outcome_date": "2026-08-24",
+        "steps": 11508,
+        "value": 0.4,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-24",
+        "outcome_date": "2026-08-25",
+        "steps": 3887,
+        "value": 2.1,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-25",
+        "outcome_date": "2026-08-26",
+        "steps": 5266,
+        "value": -2.7,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-26",
+        "outcome_date": "2026-08-27",
+        "steps": 6645,
+        "value": -1.0,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-27",
+        "outcome_date": "2026-08-28",
+        "steps": 8024,
+        "value": 0.7,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-28",
+        "outcome_date": "2026-08-29",
+        "steps": 9403,
+        "value": 2.4,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-29",
+        "outcome_date": "2026-08-30",
+        "steps": 10782,
+        "value": -2.4,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-30",
+        "outcome_date": "2026-08-31",
+        "steps": 3161,
+        "value": -0.7,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-08-31",
+        "outcome_date": "2026-09-01",
+        "steps": 4540,
+        "value": 1.0,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-02",
+        "outcome_date": "2026-09-03",
+        "steps": 7298,
+        "value": -2.1,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-03",
+        "outcome_date": "2026-09-04",
+        "steps": 8677,
+        "value": -0.4,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-04",
+        "outcome_date": "2026-09-05",
+        "steps": 10056,
+        "value": 1.3,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-05",
+        "outcome_date": "2026-09-06",
+        "steps": 11435,
+        "value": -3.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-06",
+        "outcome_date": "2026-09-07",
+        "steps": 3814,
+        "value": -1.8,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-07",
+        "outcome_date": "2026-09-08",
+        "steps": 0,
+        "value": -0.1,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-08",
+        "outcome_date": "2026-09-09",
+        "steps": 6572,
+        "value": 1.6,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-09",
+        "outcome_date": "2026-09-10",
+        "steps": 7951,
+        "value": -3.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-10",
+        "outcome_date": "2026-09-11",
+        "steps": 9330,
+        "value": -1.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-11",
+        "outcome_date": "2026-09-12",
+        "steps": 10709,
+        "value": 0.2,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-12",
+        "outcome_date": "2026-09-13",
+        "steps": 3088,
+        "value": 1.9,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-13",
+        "outcome_date": "2026-09-14",
+        "steps": 4467,
+        "value": -2.9,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-14",
+        "outcome_date": "2026-09-15",
+        "steps": 5846,
+        "value": -1.2,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-15",
+        "outcome_date": "2026-09-16",
+        "steps": 7225,
+        "value": 0.5,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-17",
+        "outcome_date": "2026-09-18",
+        "steps": 9983,
+        "value": -2.6,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-18",
+        "outcome_date": "2026-09-19",
+        "steps": 11362,
+        "value": -0.9,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-19",
+        "outcome_date": "2026-09-20",
+        "steps": 3741,
+        "value": 0.8,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-21",
+        "outcome_date": "2026-09-22",
+        "steps": 6499,
+        "value": -2.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-22",
+        "outcome_date": "2026-09-23",
+        "steps": 7878,
+        "value": -0.6,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-23",
+        "outcome_date": "2026-09-24",
+        "steps": 9257,
+        "value": 1.1,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-24",
+        "outcome_date": "2026-09-25",
+        "steps": 10636,
+        "value": 2.8,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-25",
+        "outcome_date": "2026-09-26",
+        "steps": 3015,
+        "value": -2.0,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-26",
+        "outcome_date": "2026-09-27",
+        "steps": 4394,
+        "value": -0.3,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-27",
+        "outcome_date": "2026-09-28",
+        "steps": 5773,
+        "value": 1.4,
+        "group": "lower",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      },
+      {
+        "activity_date": "2026-09-29",
+        "outcome_date": "2026-09-30",
+        "steps": 8531,
+        "value": -1.7,
+        "group": "upper",
+        "activity_response_ids": [],
+        "outcome_response_ids": []
+      }
+    ],
+    "exclusions": {
+      "activity_unavailable": 3,
+      "activity_provisional": 3,
+      "outcome_unavailable": 3
+    }
+  }
+}

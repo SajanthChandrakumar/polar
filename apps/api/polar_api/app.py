@@ -122,6 +122,16 @@ def create_app(settings=None, store=None, *, transport=None, collector=None):
         from .analytics import analytics
         return analytics(store, days)
 
+    @app.get('/api/patterns')
+    def patterns_view(request: Request, days: int = 90, outcome: str = 'sleep'):
+        auth.require(request)
+        if days not in (30, 90):
+            raise HTTPException(422, 'Zeitraum muss 30 oder 90 Tage betragen.')
+        if outcome not in ('sleep', 'ans'):
+            raise HTTPException(422, 'Ergebnis muss sleep oder ans sein.')
+        from .patterns import patterns
+        return patterns(store, days=days, outcome=outcome)
+
     @app.get('/api/polar/authorize')
     def authorize(request: Request):
         session = auth.require(request)

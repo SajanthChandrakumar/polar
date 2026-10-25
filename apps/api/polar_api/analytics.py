@@ -372,6 +372,25 @@ def _day_value(entry, key):
     return _clean(entry['value'], key), ids, None, provisional
 
 
+def _daily_points(store, start, end, now):
+    """Load normalized, deduplicated day values for a shared calendar window."""
+    since = datetime.combine(start, time.min, ZURICH).astimezone(timezone.utc)
+    values = _build_values(_metric_payloads(store, since), now, start)
+    points = {key: {} for key in AREAS}
+    for key in AREAS:
+        for index in range((end - start).days + 1):
+            day = start + timedelta(days=index)
+            entry = values[key].get(day)
+            value, ids, count, provisional = _day_value(entry, key)
+            item = {'date': day.isoformat(), 'value': value, 'provisional': provisional, 'response_ids': ids}
+            if key == 'recharge' and entry:
+                item.update(row=entry['row'], response_id=entry['response_id'])
+            if count is not None:
+                item['sample_count'] = count
+            points[key][day] = item
+    return points
+
+
 def _format(value):
     return f'{value:g}'
 
@@ -435,8 +454,7 @@ def analytics(store, days=30, now=None):
     end = now.date()
     start = end - timedelta(days=days - 1)
     history_start = start - timedelta(days=28)
-    since = datetime.combine(history_start, time.min, ZURICH).astimezone(timezone.utc)
-    values = _build_values(_metric_payloads(store, since), now, history_start)
+    daily_points = _daily_points(store, history_start, end, now)
     result = {
         'days': days,
         'from': start.isoformat(),
@@ -450,15 +468,15 @@ def analytics(store, days=30, now=None):
         point_ids = {}
         sample_counts = {}
         point_provisional = {}
-        all_days = (start - timedelta(days=28) + timedelta(days=index) for index in range(days + 28))
+        all_days = (history_start + timedelta(days=index) for index in range(days + 28))
         for day in all_days:
-            entry = values[key].get(day)
-            value, ids, count, provisional = _day_value(entry, key)
+            item = daily_points[key][day]
+            value = item['value']
             point_values[day] = value
-            point_ids[day] = ids
-            point_provisional[day] = provisional or (key == 'heart' and day == end and value is not None)
-            if count is not None:
-                sample_counts[day] = count
+            point_ids[day] = item['response_ids']
+            point_provisional[day] = item['provisional'] or (key == 'heart' and day == end and value is not None)
+            if 'sample_count' in item:
+                sample_counts[day] = item['sample_count']
 
         points, feedback, valid_days = [], [], 0
         for index in range(days):
@@ -499,14 +517,14 @@ def analytics(store, days=30, now=None):
         })
     for index in range(days):
         day = start + timedelta(days=index)
-        entry = values['recharge'].get(day)
-        row = entry.get('row') if entry else None
+        item = daily_points['recharge'][day]
+        row = item.get('row')
         value, reason = _recovery_value(row) if row else (None, 'missing')
         result['daily_recovery'].append({
             'date': day.isoformat(),
             'value': value,
             'reason': reason,
             'source_path': '/nightly-recharge-results',
-            'response_ids': [entry['response_id']] if entry else [],
+            'response_ids': [item['response_id']] if 'response_id' in item else [],
         })
     return result

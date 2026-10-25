@@ -4,7 +4,8 @@ Python 3.12 und Node.js 22 verwenden. Alle Befehle im Repository-Stamm ausfuehre
 
 ```sh
 python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install --upgrade pip==26.2.2
+.venv/bin/python -m pip install -r requirements.lock
 .venv/bin/python scripts/setup_local.py
 npm --prefix apps/web ci
 npm --prefix apps/web run build
@@ -72,7 +73,7 @@ Tests verwenden simulierte MongoDB-/Polar-Antworten. Sie duerfen `.env` oder das
 Build und Start sind in `render.yaml` festgelegt:
 
 ```sh
-pip install -r requirements.txt && npm --prefix apps/web ci && npm --prefix apps/web run build
+python -m pip install --upgrade pip==26.2.2 && python -m pip install -r requirements.lock && npm --prefix apps/web ci && npm --prefix apps/web run build
 uvicorn polar_api.app:create_app --factory --host 0.0.0.0 --port $PORT --no-access-log
 ```
 
@@ -81,3 +82,17 @@ uvicorn polar_api.app:create_app --factory --host 0.0.0.0 --port $PORT --no-acce
 Ein Prozess, kein Scheduler. Free-Dienste können pausieren; der erste Aufruf kann deshalb länger dauern. Bereits gespeicherte Antworten bleiben in MongoDB. Ein unterbrochener Abruf kann erneut gestartet werden. 90 Tage Verlauf zeigen ausschließlich vorhandene Archivdaten; es gibt keine automatische historische Nachladung.
 
 Offizielle Quellen: [Blueprint-Format und automatische Deploys](https://render.com/docs/blueprint-spec), [Render-Umgebungsvariablen](https://render.com/docs/environment-variables), [ausgehende IP-Adressen](https://render.com/docs/outbound-ip-addresses), [Python-Version](https://render.com/docs/python-version), [native Build-Werkzeuge](https://render.com/docs/native-runtimes).
+
+## Sicherheitsstand und Anmeldung
+
+`requirements.txt` enthält die direkten Abhängigkeiten und Sicherheitsuntergrenzen. `requirements.lock` hält die getestete Python-3.12-Auflösung einschließlich transitiver Pakete fest; `apps/web/package-lock.json` erfüllt dieselbe Aufgabe für npm. Der Build aktualisiert pip zuerst auf 26.2.2, damit auch dessen separat mitgelieferter Zertifikatsspeicher erneuert wird. Bei einem manuell eingerichteten Render-Dienst den aktualisierten Build-Befehl aus `render.yaml` übernehmen.
+
+Die Anmeldung erlaubt fünf Versuche je Client-Adresse und Kalenderminute. Der Zähler bleibt in MongoDB über Prozessneustarts hinweg erhalten und läuft per TTL ab. Gespeichert wird eine mit dem Sitzungsschlüssel geschützte Kennung, keine Klartext-IP. Ein ausgeschöpftes Budget sperrt weiterhin diesen Client, nicht andere Adressen. Clients hinter derselben öffentlichen Adresse teilen ein Budget; dies ersetzt keinen Schutz gegen verteilte Angriffe.
+
+Im Render-Betrieb (`RENDER=true`) verwendet der Login-Zähler ausschließlich genau einen gültigen `CF-Connecting-IP`-Header. Die App kanonisiert den Wert mit Pythons `ipaddress` und speichert nur eine HMAC-Kennung im Zähler. Ein fehlender, doppelter, kommaseparierter oder ungültiger Wert führt zu einer allgemeinen `503`-Antwort, bevor Login-Zähler oder Sitzung geschrieben werden; es gibt keinen Rückgriff auf `request.client`, `X-Forwarded-For` oder `Forwarded`. Außerhalb von Render bleibt `request.client` die Quelle und die App ignoriert `CF-Connecting-IP` sowie Weiterleitungsheader.
+
+`render.yaml` startet Uvicorn mit `--no-proxy-headers`, damit Uvicorn `request.client` und URL-Schema nicht aus Forwarding-Headern umschreibt. Die App verwendet für Herkunft, Cookies und OAuth-Redirects die konfigurierte `APP_ORIGIN` und explizite Redirect-URI.
+
+Diese Render-Auswahl setzt die dokumentierte aktuelle öffentliche Kette über Cloudflare und Render voraus: Cloudflare überschreibt `CF-Connecting-IP` mit der Besucheradresse, während `X-Forwarded-For` vom Aufrufer gelieferte Werte enthalten kann. Die Annahme gilt nur, solange öffentlicher Verkehr durch diese verwaltete Kette läuft und `RENDER=true` gesetzt ist. Ein direkter Dienstzugang oder eine geänderte Proxy-Kette erfordert eine erneute Prüfung. Lokale Tests belegen nicht, dass die produktive Kante Header wie dokumentiert überschreibt. [Render: Proxy-Kette und Client-IP-Header](https://render.com/articles/host-pocketbase-on-render). [Cloudflare: `CF-Connecting-IP`](https://developers.cloudflare.com/fundamentals/reference/http-request-headers/#cf-connecting-ip). [Uvicorn: Einstellungen für Proxy-Header](https://www.uvicorn.org/settings/#http).
+
+Nach Abhängigkeitsupdates die Auflösung in einer frischen Python-3.12-Umgebung erstellen, beide Lockdateien prüfen, Registry-Audits sowie Backendtests, Oberflächentests und Produktionsbuild ausführen. Keine pauschalen Major-Upgrades mit `npm audit fix --force`.

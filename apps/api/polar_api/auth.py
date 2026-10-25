@@ -2,6 +2,8 @@
 import asyncio
 import hashlib
 import hmac
+import ipaddress
+import os
 import secrets
 from datetime import timedelta
 
@@ -46,12 +48,25 @@ class Auth:
         if request.headers.get('origin') != self.settings.public_url:
             raise HTTPException(403, 'Ungültiger Anfrageursprung.')
 
+    def _login_client_host(self, request):
+        if os.getenv('RENDER') == 'true':
+            addresses = request.headers.getlist('cf-connecting-ip')
+            if len(addresses) != 1:
+                raise HTTPException(503, 'Anmeldung derzeit nicht verfügbar.')
+            try:
+                return str(ipaddress.ip_address(addresses[0]))
+            except ValueError:
+                raise HTTPException(503, 'Anmeldung derzeit nicht verfügbar.') from None
+        return request.client.host if request.client and request.client.host else '<missing-client>'
+
     def login(self, request, password, response):
         self.origin(request)
-        # Single owner: a database counter also covers simultaneous clients and process restarts.
+        # Render's edge overwrites CF-Connecting-IP; X-Forwarded-For is not trusted.
+        client_host = self._login_client_host(request)
         timestamp = now()
         bucket = int(timestamp.timestamp()) // 60
-        attempt = self.store.db.login_limits.find_one_and_update({'_id': str(bucket)}, {'$inc': {'attempts': 1}, '$set': {'expires_at': timestamp + timedelta(minutes=2)}}, upsert=True, return_document=True)
+        client_id = hmac.new(self.settings.session_secret.encode(), b'login-limit:' + client_host.encode(), hashlib.sha256).hexdigest()
+        attempt = self.store.db.login_limits.find_one_and_update({'_id': f'{bucket}:{client_id}'}, {'$inc': {'attempts': 1}, '$set': {'expires_at': timestamp + timedelta(minutes=2)}}, upsert=True, return_document=True)
         if attempt['attempts'] > 5:
             raise HTTPException(429, 'Zu viele Anmeldeversuche. Bitte später erneut versuchen.', headers={'Retry-After': '60'})
         if not hmac.compare_digest(self._hash(password), self._hash(self.settings.owner_password)):

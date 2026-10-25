@@ -7,3 +7,7 @@ python-dotenv>=1,<2
 pytest>=8,<10
 mongomock>=4.3,<5
 PyYAML>=6,<7
+
+# Security floors for transitive runtime dependencies (October 2026).
+certifi>=2026.10.19
+opentelemetry-api>=1.45.1,<2
