@@ -13,6 +13,12 @@ function backend(authenticated = true, connected = false) {
     if (url === '/api/session') body = {authenticated:loggedIn};
     else if (url === '/api/login') {loggedIn=true; body={authenticated:true};}
     else if (url === '/api/logout') {loggedIn=false; return new Response(null,{status:204});}
+    else if (url.startsWith('/api/patterns?')) {
+      const params = new URL(url, 'http://localhost').searchParams;
+      const days = Number(params.get('days') ?? 90), outcome = params.get('outcome') ?? 'sleep';
+      body = {days, outcome, from:days === 30 ? '2026-09-26' : '2026-07-28', to:'2026-10-25', activity_from:days === 30 ? '2026-09-25' : '2026-07-27', activity_to:'2026-10-24', timezone:'Europe/Zurich', unit:outcome === 'ans' ? 'ANS' : 'min', threshold:null, status:'insufficient', minimum_group_size:7, groups:{lower:{count:0,median:null,q1:null,q3:null},upper:{count:0,median:null,q1:null,q3:null}}, pairs:[], exclusions:{activity_unavailable:0,activity_provisional:0,outcome_unavailable:0}};
+    }
+
     else if (url.startsWith('/api/analytics?')) body={days:30,from:'2026-09-06',to:'2026-10-05',timezone:'Europe/Zurich',series:[]};
     else if (url === '/api/dashboard') body={connected,last_sync:null,sources:[source]};
     else if (url === '/api/sync') body={run_id:'run-1',status:'running'};
