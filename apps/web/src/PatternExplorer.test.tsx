@@ -100,5 +100,7 @@ describe('PatternExplorer', () => {
     fireEvent.click(screen.getByRole('button', { name: /02\.10\.2026.*390 min/ }));
     expect(screen.queryByRole('button', { name: 'Aktivitätsquelle ansehen' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ergebnisquelle ansehen' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('So ist der Vergleich zu lesen'));
+    expect(screen.getByText(/Für diesen Zeitraum ist keine Schritt-Grenze verfügbar; es wird keine Grenzlinie eingezeichnet/)).toBeVisible();
   });
 });

@@ -211,7 +211,56 @@ describe('private live dashboard', () => {
     expect(screen.getByText('actual-hash')).toBeVisible();expect(screen.queryByText('stale-response-hash')).not.toBeInTheDocument();
   });
 
-  it('treats logout 401 as signed out and purges private state while aborting inflight requests', async()=>{
+    it('closes and clears the private inspector when pattern analysis returns 401', async () => {
+    const {requests,fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
+    let finishPatterns!:(response:Response)=>void;
+    fetcher.mockImplementation(async(url,init)=> {
+      if(url.startsWith('/api/patterns?')) { requests.push({url,init}); return new Promise<Response>(resolve=>{finishPatterns=resolve;}); }
+      return fallback(url,init);
+    });
+    render(<App/>);
+    await screen.findByText('Erfolgreich leer',{selector:'.badge'});
+    await waitFor(()=>expect(requests.some(request=>request.url.startsWith('/api/patterns?'))).toBe(true));
+    openSources(); fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
+    expect(await within(dialog).findByText('actual-hash')).toBeVisible();
+    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('list');
+    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveTextContent('list');
+
+    await act(async()=>{finishPatterns(new Response(JSON.stringify({detail:'Anmeldung erforderlich'}),{status:401,headers:{'Content-Type':'application/json'}}));});
+    await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
+    expect(screen.queryByText('Antwort 1 von 2 · list')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
+    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
+    expect(screen.queryByText('Antwort 1 von 2 · list')).not.toBeInTheDocument();
+  });
+
+  it('closes a private source inspector while a pending patterns request returns 401', async () => {
+    const {requests,fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
+    let finishPatterns!:(response:Response)=>void;
+    const analytics={days:7,from:'2026-10-01',to:'2026-10-07',timezone:'Europe/Zurich',series:[{key:'heart',label:'Herzfrequenz',unit:'bpm',kind:'line',source_path:'/continuous-samples',coverage:{valid_days:1,total_days:7},points:[{date:'2026-10-03',value:70,provisional:false,response_ids:['private-pattern-source-id']}],feedback:[]}]};
+    fetcher.mockImplementation(async(url,init)=> {
+      if(url.startsWith('/api/patterns?')) { requests.push({url,init}); return new Promise<Response>(resolve=>{finishPatterns=resolve;}); }
+      if(url.startsWith('/api/analytics?')) return new Response(JSON.stringify(analytics),{status:200});
+      return fallback(url,init);
+    });
+    render(<App/>);
+    const heart=await screen.findByRole('region',{name:'Herzfrequenz'});
+    await waitFor(()=>expect(requests.some(request=>request.url.startsWith('/api/patterns?'))).toBe(true));
+    fireEvent.change(within(heart).getByRole('combobox',{name:'Tageswert Herzfrequenz'}),{target:{value:'2026-10-03'}});
+    fireEvent.click(within(heart).getByText('Messdetails ansehen'));
+    fireEvent.click(await within(heart).findByRole('button',{name:'Originalantwort ansehen'}));
+    const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
+    expect(await within(dialog).findByText('actual-hash')).toBeVisible();
+    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('private-pattern-source-id');
+
+    await act(async()=>{finishPatterns(new Response(JSON.stringify({detail:'Anmeldung erforderlich'}),{status:401,headers:{'Content-Type':'application/json'}}));});
+    await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
+    expect(screen.queryByText('Antwort 1 von 1 · private-pattern-source-id')).not.toBeInTheDocument();
+  });
+it('treats logout 401 as signed out and purges private state while aborting inflight requests', async()=>{
     vi.useFakeTimers();const {requests,fetcher}=backend(true,true);const fallback=fetcher.getMockImplementation()!;
     let finishPoll:(response:Response)=>void=()=>{};
     fetcher.mockImplementation(async(url,init)=>{

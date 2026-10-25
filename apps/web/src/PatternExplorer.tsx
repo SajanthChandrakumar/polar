@@ -128,7 +128,7 @@ export default function PatternExplorer({ data, days, outcome, onDaysChange, onO
     <details className="pattern-method">
       <summary>So ist der Vergleich zu lesen</summary>
       <p>Verglichen werden abgeschlossene archivierte Bewegungstage mit dem Ergebnis der jeweils folgenden Nacht. Ein abgeschlossener Archivtag belegt keine Tragezeit und keine vollständige Sensorabdeckung. Die Gruppen beschreiben Beobachtungen aus deinem Archiv; sie zeigen keine Ursache und sind keine Vorhersage.</p>
-      {data && <p>Die Grenzlinie ist der Median der verfügbaren Bewegungstage. Die mittleren 50&nbsp;% (Q1 bis Q3) zeigen die beobachtete Streuung, kein Konfidenzintervall. {data.exclusions.activity_unavailable + data.exclusions.activity_provisional + data.exclusions.outcome_unavailable} Tagpaare wurden wegen fehlender oder vorläufiger Werte ausgeschlossen.</p>}
+      {data && <p>{data.threshold === null ? 'Für diesen Zeitraum ist keine Schritt-Grenze verfügbar; es wird keine Grenzlinie eingezeichnet.' : 'Die Grenzlinie ist der Median der verfügbaren Bewegungstage.'} Die mittleren 50&nbsp;% (Q1 bis Q3) zeigen die beobachtete Streuung, kein Konfidenzintervall. {data.exclusions.activity_unavailable + data.exclusions.activity_provisional + data.exclusions.outcome_unavailable} Tagpaare wurden wegen fehlender oder vorläufiger Werte ausgeschlossen.</p>}
     </details>
   </section>;
 }
