@@ -10,6 +10,24 @@ Diagramme zeigen Datenabdeckung, Lücken, Datum, Einheit und verknüpfte Origina
 
 Die Auswertung erklärt statistische Unterschiede. Sie vergibt keinen Gesundheitsscore und keine Trainings- oder medizinischen Empfehlungen. Bei zu wenig Daten zeigt sie vorhandene und benötigte Vergleichstage.
 
+## Bewegung und Ergebnis der folgenden Nacht
+
+Das Recovery Lab vergleicht archivierte Bewegung mit Schlafdauer oder ANS-Status in der unmittelbar folgenden Kalendernacht in `Europe/Zurich`. Der private Endpunkt `GET /api/patterns?days=30|90&outcome=sleep|ans` ist authentifiziert und nur lesend. Er verwendet die bestehende Tageskorrektur und Normalisierung erfolgreicher Rohantworten; er startet weder eine Polar-Abfrage noch einen Schreibvorgang. Die gemeinsame `PatternExplorer`-Ansicht erhält die privaten Daten über `PatternLive`.
+
+Die [öffentliche Demo](https://polarhealth.onrender.com/demo) rendert vor der privaten App einen eigenen Einstieg und liest vier fest gebündelte synthetische Ergebnisse. Die Steuerelemente wählen zwischen 30 oder 90 Nächten und Schlaf oder ANS. Sie machen keine API-, Session-, Dashboard-, Sync-, Polar- oder Datenabrufe. Alle Beispiele sind frei erzeugte Werte für den festen Zeitraum 3. Juli bis 30. September 2026; Quellreferenzen werden vor dem Bündeln geleert. Regeneration aus dem Projektstamm:
+
+```sh
+PYTHONPATH=apps/api .venv/bin/python scripts/generate_pattern_demo.py
+```
+
+Der Generator übergibt normalisierte synthetische Punkte an dieselbe reine `calculate_patterns`-Berechnung wie der private Endpunkt. Damit bleiben Gruppierung, Tagesgrenzen und Zusammenfassungen zwischen Demo und Backend gleich.
+
+Die Aktivität wird dem Ergebnis der nächsten Kalendernacht zugeordnet. Die Median-Grenze wird aus allen verfügbaren, nicht vorläufigen Bewegungstagen des verschobenen Zeitfensters berechnet, auch wenn für deren Folgetag kein Ergebnis vorliegt. Unterhalb der Grenze liegt die untere Gruppe; Werte an oder oberhalb davon bilden die obere Gruppe. Schlafwerte müssen nicht negativ sein, ANS-Werte dürfen negativ sein. Null Schritte bleiben gültig. Fehlende beziehungsweise ungültige Bewegungswerte, vorläufige Bewegungstage und fehlende beziehungsweise ungültige Nachtwerte werden getrennt gezählt.
+
+Erst bei mindestens sieben vollständigen Paaren in **beiden** Gruppen werden Median und inklusive Quartile für beide Gruppen angezeigt. Weniger Daten bleiben als Punkte und Gruppengrößen sichtbar. Quartile beschreiben die beobachtete Streuung, kein Konfidenzintervall. Vollständigkeit eines archivierten Tages beweist weder Tragezeit noch vollständige Sensorabdeckung. Ergebnisse sind beschreibend und belegen keine Ursache; sie sind keine Prognose, Gesundheitsbewertung oder medizinische Empfehlung.
+
+Private Paare benötigen vollständige, gültige Archivmessungen; die aktuelle Abdeckung ist hier nicht verifiziert. Die öffentliche Demo verwendet synthetische Daten und ersetzt keine fehlenden privaten Messungen.
+
 ## Dein Tag und Erholungsbewertung
 
 `daily_recovery` ergänzt die bestehende Analytics-Antwort um einen Eintrag je Kalendertag des ausgewählten Zeitraums: `date`, `value` (Ganzzahl 1–6 oder null), `reason` (`available`, `missing`, `invalid`), `source_path` und `response_ids`. Die Bewertung stammt ausschließlich aus dem archivierten Polar-Feld `recoveryIndicator`, aus derselben neuesten detailreichen Tagesantwort wie die ANS-Reihe. Korrigierte Antworten ersetzen ältere Auswertungen; Discovery-Antworten verdrängen keine vorhandenen Messungen.

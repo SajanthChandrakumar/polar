@@ -45,9 +45,11 @@
 .pattern-chart-key i { width: 9px; height: 9px; border-radius: 50%; }
 .pattern-key-lower { background: #7f8598; }
 .pattern-key-upper { margin-left: 5px; background: #648468; }
+.pattern-scatter-frame { width: 100%; min-width: 0; }
 .pattern-scatter { display: block; width: 100%; height: auto; margin-top: 5px; overflow: visible; }
 .pattern-grid-line line { stroke: #e9e7dd; stroke-width: 1; }
-.pattern-grid-line text { fill: #778276; font-size: 11px; font-variant-numeric: tabular-nums; }
+.pattern-grid-line text, .pattern-step-tick text { fill: #778276; font-size: 11px; font-variant-numeric: tabular-nums; }
+.pattern-step-tick line { stroke: #b9c0b6; stroke-width: 1; }
 .pattern-axis { stroke: #b9c0b6; stroke-width: 1.2; }
 .pattern-axis-label { fill: #657468; font-size: 11px; }
 .pattern-threshold line { stroke: #b77b50; stroke-width: 1.5; stroke-dasharray: 5 5; }
@@ -96,6 +98,7 @@
   .pattern-chart-heading { display: block; }
   .pattern-chart-key { margin-top: 9px; }
   .pattern-grid-line text { font-size: 13px; }
+  .pattern-step-tick text { font-size: 12px; }
   .pattern-axis-label { font-size: 13px; }
   .pattern-threshold text { font-size: 12px; }
   .pattern-chart-foot { display: grid; }
@@ -107,6 +110,7 @@
   .pattern-chart-card { padding-inline: 7px; }
   .pattern-chart-key { font-size: 10px; }
   .pattern-grid-line text { font-size: 12px; }
+  .pattern-step-tick text { font-size: 11px; }
   .pattern-axis-label { font-size: 12px; }
   .pattern-threshold text { font-size: 11px; }
 }

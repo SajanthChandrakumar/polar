@@ -69,6 +69,20 @@ describe('PatternExplorer', () => {
     expect(within(chart).getByRole('button', { name: /-0\.4 ANS/ })).toBeVisible();
   });
 
+  it('shows numeric labels along the step axis', () => {
+    renderExplorer();
+    const chart = screen.getByRole('region', { name: 'Bewegung und nächste Nacht' });
+    const scale = within(chart).getByRole('group', { name: 'Schritte-Skala' });
+    expect(within(scale).getByText(/7.?000/)).toBeVisible();
+    expect(within(scale).getByText(/8.?000/)).toBeVisible();
+  });
+
+  it('exposes point controls inside an accessible graph group', () => {
+    renderExplorer();
+    const graph = screen.getByRole('group', { name: 'Auswählbares Punktdiagramm' });
+    expect(within(graph).getAllByRole('button')).toHaveLength(2);
+  });
+
   it('selects points with pointer, touch, and keyboard and opens only available source records', () => {
     const onInspect = vi.fn();
     renderExplorer({ onInspect });

@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import './patterns.css';
 import { PATTERN_ACTIVITY_SOURCE, PATTERN_ANS_SOURCE, PATTERN_SLEEP_SOURCE, type PatternAnalysis, type PatternOutcome, type PatternPair, type PatternQuartiles } from './patterns';
 
@@ -36,32 +36,56 @@ function groupSummary(group: PatternQuartiles, outcome: PatternOutcome) {
   return { median: formatOutcome(group.median, outcome), spread: `Q1 ${formatOutcome(group.q1, outcome)} · Q3 ${formatOutcome(group.q3, outcome)}` };
 }
 
+function stepTicks(min: number, max: number) {
+  const span = Math.max(max - min, 1);
+  const rawStep = span / 3;
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const normalized = rawStep / magnitude;
+  const step = Math.max(1, (normalized < 1.5 ? 1 : normalized < 3 ? 2 : normalized < 7 ? 5 : 10) * magnitude);
+  const ticks: number[] = [];
+  for (let value = Math.max(0, Math.ceil(min / step) * step); value <= max + step * 1e-9 && ticks.length < 5; value += step) ticks.push(value);
+  return ticks.length >= 2 ? ticks : [min, min + span / 2, max];
+}
+
 function ScatterPlot({ data, outcome, selectedKey, onSelect }: { data: PatternAnalysis; outcome: PatternOutcome; selectedKey: string; onSelect: (pair: PatternPair) => void }) {
-  const width = 720, height = 360, left = 66, right = 28, top = 24, bottom = 56;
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(720);
+  useEffect(() => {
+    if (!frameRef.current || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const nextWidth = Math.round(entry.contentRect.width);
+      if (nextWidth > 0) setWidth(current => current === nextWidth ? current : nextWidth);
+    });
+    observer.observe(frameRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const height = 360, left = Math.min(66, Math.max(44, width * .16)), right = Math.min(28, Math.max(12, width * .04)), top = 24, bottom = 58;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
   const xValues = data.pairs.map(pair => pair.steps).concat(data.threshold === null ? [] : [data.threshold]);
   const yValues = data.pairs.map(pair => pair.value);
   const rawXMin = xValues.length ? Math.min(...xValues) : 0, rawXMax = xValues.length ? Math.max(...xValues) : 1;
   const xPadding = rawXMin === rawXMax ? Math.max(Math.abs(rawXMin) * .08, 1) : (rawXMax - rawXMin) * .08;
-  const xMin = rawXMin - xPadding, xMax = rawXMax + xPadding;
+  const xMin = Math.max(0, rawXMin - xPadding), xMax = rawXMax + xPadding;
   const rawYMin = yValues.length ? Math.min(...yValues) : 0, rawYMax = yValues.length ? Math.max(...yValues) : 1;
   const yPadding = rawYMin === rawYMax ? Math.max(Math.abs(rawYMin) * .1, 1) : (rawYMax - rawYMin) * .1;
   const yMin = rawYMin - yPadding, yMax = rawYMax + yPadding;
   const x = (value: number) => left + ((value - xMin) / (xMax - xMin)) * plotWidth;
   const y = (value: number) => top + plotHeight - ((value - yMin) / (yMax - yMin)) * plotHeight;
-  const yTicks = [yMin, yMin + (yMax - yMin) / 2, yMax];
+  const yTicks = [yMin, yMin + (yMax - yMin) / 2, yMax], xTicks = stepTicks(xMin, xMax);
   const outcomePath = outcome === 'sleep' ? PATTERN_SLEEP_SOURCE : PATTERN_ANS_SOURCE;
 
   return <section className="pattern-chart-card" aria-label="Bewegung und nächste Nacht">
     <div className="pattern-chart-heading"><div><h3>Jeder Punkt steht für zwei Tage</h3><p>Bewegung am Tag · Ergebnis in der folgenden Nacht</p></div><span className="pattern-chart-key"><i className="pattern-key-lower" />Weniger Bewegung <i className="pattern-key-upper" />Mehr Bewegung</span></div>
-    {data.pairs.length === 0 ? <p className="pattern-chart-empty" role="status">Für diesen Zeitraum gibt es keine vollständigen Tagspaare.</p> : <svg className="pattern-scatter" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby="pattern-chart-title pattern-chart-desc">
+    {data.pairs.length === 0 ? <p className="pattern-chart-empty" role="status">Für diesen Zeitraum gibt es keine vollständigen Tagspaare.</p> : <div className="pattern-scatter-frame" ref={frameRef}><svg className="pattern-scatter" viewBox={`0 0 ${width} ${height}`} role="group" aria-label="Auswählbares Punktdiagramm" aria-describedby="pattern-chart-desc">
       <title id="pattern-chart-title">Bewegung und nächste Nacht</title>
       <desc id="pattern-chart-desc">Die waagerechte Achse zeigt Schritte am Vortag. Die senkrechte Achse zeigt {outcome === 'sleep' ? 'Schlafdauer' : 'ANS-Status'} in der folgenden Nacht. Jeder Punkt kann ausgewählt werden.</desc>
       {yTicks.map((tick, index) => <g key={index} className="pattern-grid-line"><line x1={left} x2={width - right} y1={y(tick)} y2={y(tick)} /><text x={left - 10} y={y(tick) + 4} textAnchor="end">{formatOutcome(tick, outcome).replace(/ (min|ANS)$/, '')}</text></g>)}
       <line className="pattern-axis" x1={left} x2={left} y1={top} y2={height - bottom} />
       <line className="pattern-axis" x1={left} x2={width - right} y1={height - bottom} y2={height - bottom} />
       {data.threshold !== null && <g className="pattern-threshold"><line x1={x(data.threshold)} x2={x(data.threshold)} y1={top} y2={height - bottom} /><text x={Math.min(x(data.threshold) + 7, width - right - 104)} y={top + 14}>Median-Grenze</text></g>}
-      <text className="pattern-axis-label" x={left + plotWidth / 2} y={height - 12} textAnchor="middle">Schritte am Vortag</text>
+      <g className="pattern-step-scale" role="group" aria-label="Schritte-Skala">{xTicks.map((tick, index) => <g key={index} className="pattern-step-tick"><line x1={x(tick)} x2={x(tick)} y1={height - bottom} y2={height - bottom + 5} /><text x={x(tick)} y={height - bottom + 19} textAnchor="middle">{formatSteps(tick)}</text></g>)}</g>
+      <text className="pattern-axis-label" x={left + plotWidth / 2} y={height - 8} textAnchor="middle">Schritte am Vortag</text>
       <text className="pattern-axis-label" x="18" y={top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 18 ${top + plotHeight / 2})`}>{outcome === 'sleep' ? 'Schlafdauer (min)' : 'ANS-Status'}</text>
       {data.pairs.map(pair => {
         const key = pairKey(pair), isSelected = selectedKey === key;
@@ -71,7 +95,7 @@ function ScatterPlot({ data, outcome, selectedKey, onSelect }: { data: PatternAn
           <circle className="pattern-point-dot" cx={x(pair.steps)} cy={y(pair.value)} r="7" />
         </g>;
       })}
-    </svg>}
+    </svg></div>}
     <div className="pattern-chart-foot"><span>Mehr Schritte bedeuten mindestens den Medianwert.</span>{data.threshold !== null && <strong>Schritte-Grenze · {formatSteps(data.threshold)}</strong>}</div>
   </section>;
 }

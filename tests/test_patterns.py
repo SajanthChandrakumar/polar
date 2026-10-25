@@ -23,7 +23,7 @@ def test_pairs_join_preceding_calendar_day_across_zurich_dst_and_threshold_ignor
         point('2026-02-27', 100, response_ids=['first-activity']),
         point('2026-03-01', 200),
         point('2026-03-27', 300),
-        point('2026-03-28', 400, response_ids=['dst-activity']),
+        point('2026-03-28', 500, response_ids=['dst-activity']),
     ]
     outcomes = [
         point('2026-02-28', 360, response_ids=['first-sleep']),
@@ -42,7 +42,7 @@ def test_pairs_join_preceding_calendar_day_across_zurich_dst_and_threshold_ignor
         {'activity_date': '2026-02-27', 'outcome_date': '2026-02-28', 'steps': 100,
          'value': 360, 'group': 'lower', 'activity_response_ids': ['first-activity'],
          'outcome_response_ids': ['first-sleep']},
-        {'activity_date': '2026-03-28', 'outcome_date': '2026-03-29', 'steps': 400,
+        {'activity_date': '2026-03-28', 'outcome_date': '2026-03-29', 'steps': 500,
          'value': 420, 'group': 'upper', 'activity_response_ids': ['dst-activity'],
          'outcome_response_ids': ['dst-sleep']},
     ]

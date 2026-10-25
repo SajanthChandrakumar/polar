@@ -91,6 +91,7 @@ describe('Dashboard behavior', () => {
     it('shows the private pattern lab entry without requesting patterns before sign-in', async () => {
     render(<App />);
     expect(screen.getByRole('link', { name: 'Bewegungsmuster' })).toHaveAttribute('href', '#pattern-explorer');
+    expect(screen.getByRole('link', { name: 'Öffentliche Demo' })).toHaveAttribute('href', '/demo');
     expect(await screen.findByRole('heading', { name: 'Wie hängt Bewegung mit der nächsten Nacht zusammen?' })).toBeVisible();
     expect(screen.getByText(/Melde dich an, um deine privaten Bewegungsmuster zu sehen/)).toBeVisible();
     expect(vi.mocked(fetch).mock.calls.some(([path]) => String(path).startsWith('/api/patterns'))).toBe(false);
