@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
 from urllib.parse import parse_qs, urlparse
+from zoneinfo import ZoneInfo
 
 import httpx
 import pytest
@@ -350,3 +351,53 @@ def test_analytics_is_private_validates_ranges_and_does_not_collect():
         assert all(point['value'] is None for series in data['series'] for point in series['points'])
     assert store.db.sync_runs.count_documents({}) == 0
     assert store.db.raw_api_responses.count_documents({}) == 0
+
+
+def test_patterns_route_is_private_and_does_not_collect_or_write_archive_data():
+    def unexpected_collection(*args, **kwargs):
+        pytest.fail('patterns GET must never collect Polar data')
+
+    client, store = build_client(collector=unexpected_collection)
+    assert client.get('/api/patterns').status_code == 401
+    login(client)
+    before_runs = store.db.sync_runs.count_documents({})
+    before_responses = store.db.raw_api_responses.count_documents({})
+    before_limits = store.db.login_limits.count_documents({})
+    before_database = {
+        name: store.db[name].count_documents({})
+        for name in store.db.list_collection_names()
+    }
+
+    response = client.get('/api/patterns')
+
+    assert response.status_code == 200
+    today = datetime.now(ZoneInfo('Europe/Zurich')).date()
+    start = today - timedelta(days=89)
+    assert response.json() == {
+        'days': 90, 'outcome': 'sleep', 'from': start.isoformat(), 'to': today.isoformat(),
+        'activity_from': (start - timedelta(days=1)).isoformat(),
+        'activity_to': (today - timedelta(days=1)).isoformat(),
+        'timezone': 'Europe/Zurich', 'unit': 'min', 'threshold': None,
+        'status': 'insufficient', 'minimum_group_size': 7,
+        'groups': {
+            'lower': {'count': 0, 'median': None, 'q1': None, 'q3': None},
+            'upper': {'count': 0, 'median': None, 'q1': None, 'q3': None},
+        },
+        'pairs': [],
+        'exclusions': {'activity_unavailable': 90, 'activity_provisional': 0, 'outcome_unavailable': 0},
+    }
+    assert store.db.sync_runs.count_documents({}) == before_runs == 0
+    assert store.db.raw_api_responses.count_documents({}) == before_responses == 0
+    assert store.db.login_limits.count_documents({}) == before_limits
+    assert {
+        name: store.db[name].count_documents({})
+        for name in store.db.list_collection_names()
+    } == before_database
+
+
+def test_patterns_route_rejects_unsupported_days_and_outcomes_with_422():
+    client, _ = build_client()
+    login(client)
+
+    assert client.get('/api/patterns?days=8').status_code == 422
+    assert client.get('/api/patterns?outcome=training').status_code == 422
