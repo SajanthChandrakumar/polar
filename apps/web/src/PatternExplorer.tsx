@@ -21,14 +21,14 @@ const numberFormatter = (maximumFractionDigits: number) => new Intl.NumberFormat
 function dateLabel(date: string) { return dateFormatter.format(new Date(`${date}T12:00:00Z`)); }
 function formatSteps(value: number) { return numberFormatter(0).format(value); }
 function formatOutcome(value: number, outcome: PatternOutcome) {
-  if (outcome === 'sleep') return `${numberFormatter(0).format(value)} min`;
+  if (outcome === 'sleep') return `${numberFormatter(1).format(value / 60)} h`;
   const rounded = Math.round(value * 10) / 10;
   return `${new Intl.NumberFormat('de-CH', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Object.is(rounded, -0) ? 0 : rounded)} ANS`;
 }
 function formatDifference(value: number, outcome: PatternOutcome) {
-  const rounded = outcome === 'sleep' ? Math.round(value) : Math.round(value * 10) / 10;
+  const rounded = outcome === 'sleep' ? value / 60 : Math.round(value * 10) / 10;
   const safe = Object.is(rounded, -0) ? 0 : rounded;
-  return `${new Intl.NumberFormat('de-CH', { maximumFractionDigits: outcome === 'sleep' ? 0 : 1, signDisplay: 'exceptZero' }).format(safe)} ${outcome === 'sleep' ? 'min' : 'ANS'}`;
+  return `${new Intl.NumberFormat('de-CH', { maximumFractionDigits: 1, signDisplay: 'exceptZero' }).format(safe)} ${outcome === 'sleep' ? 'h' : 'ANS'}`;
 }
 function pairKey(pair: PatternPair) { return `${pair.activity_date}/${pair.outcome_date}`; }
 function groupSummary(group: PatternQuartiles, outcome: PatternOutcome) {
@@ -79,14 +79,14 @@ function ScatterPlot({ data, outcome, selectedKey, onSelect }: { data: PatternAn
     <div className="pattern-chart-heading"><div><h3>Jeder Punkt steht für zwei Tage</h3><p>Bewegung am Tag · Ergebnis in der folgenden Nacht</p></div><span className="pattern-chart-key"><i className="pattern-key-lower" />Weniger Bewegung <i className="pattern-key-upper" />Mehr Bewegung</span></div>
     {data.pairs.length === 0 ? <p className="pattern-chart-empty" role="status">Für diesen Zeitraum gibt es keine vollständigen Tagspaare.</p> : <div className="pattern-scatter-frame" ref={frameRef}><svg className="pattern-scatter" viewBox={`0 0 ${width} ${height}`} role="group" aria-label="Auswählbares Punktdiagramm" aria-describedby="pattern-chart-desc">
       <title id="pattern-chart-title">Bewegung und nächste Nacht</title>
-      <desc id="pattern-chart-desc">Die waagerechte Achse zeigt Schritte am Vortag. Die senkrechte Achse zeigt {outcome === 'sleep' ? 'Schlafdauer' : 'ANS-Status'} in der folgenden Nacht. Jeder Punkt kann ausgewählt werden.</desc>
-      {yTicks.map((tick, index) => <g key={index} className="pattern-grid-line"><line x1={left} x2={width - right} y1={y(tick)} y2={y(tick)} /><text x={left - 10} y={y(tick) + 4} textAnchor="end">{formatOutcome(tick, outcome).replace(/ (min|ANS)$/, '')}</text></g>)}
+      <desc id="pattern-chart-desc">Die waagerechte Achse zeigt Schritte am Vortag. Die senkrechte Achse zeigt {outcome === 'sleep' ? 'Schlafdauer in Stunden' : 'ANS-Status'} in der folgenden Nacht. Jeder Punkt kann ausgewählt werden.</desc>
+      {yTicks.map((tick, index) => <g key={index} className="pattern-grid-line"><line x1={left} x2={width - right} y1={y(tick)} y2={y(tick)} /><text x={left - 10} y={y(tick) + 4} textAnchor="end">{formatOutcome(tick, outcome).replace(/ (h|ANS)$/, '')}</text></g>)}
       <line className="pattern-axis" x1={left} x2={left} y1={top} y2={height - bottom} />
       <line className="pattern-axis" x1={left} x2={width - right} y1={height - bottom} y2={height - bottom} />
       {data.threshold !== null && <g className="pattern-threshold"><line x1={x(data.threshold)} x2={x(data.threshold)} y1={top} y2={height - bottom} /><text x={Math.min(x(data.threshold) + 7, width - right - 104)} y={top + 14}>Median-Grenze</text></g>}
       <g className="pattern-step-scale" role="group" aria-label="Schritte-Skala">{xTicks.map((tick, index) => <g key={index} className="pattern-step-tick"><line x1={x(tick)} x2={x(tick)} y1={height - bottom} y2={height - bottom + 5} /><text x={x(tick)} y={height - bottom + 19} textAnchor="middle">{formatSteps(tick)}</text></g>)}</g>
       <text className="pattern-axis-label" x={left + plotWidth / 2} y={height - 8} textAnchor="middle">Schritte am Vortag</text>
-      <text className="pattern-axis-label" x="18" y={top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 18 ${top + plotHeight / 2})`}>{outcome === 'sleep' ? 'Schlafdauer (min)' : 'ANS-Status'}</text>
+      <text className="pattern-axis-label" x="18" y={top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 18 ${top + plotHeight / 2})`}>{outcome === 'sleep' ? 'Schlafdauer (h)' : 'ANS-Status'}</text>
       {data.pairs.map(pair => {
         const key = pairKey(pair), isSelected = selectedKey === key;
         const label = `${dateLabel(pair.outcome_date)} · ${formatSteps(pair.steps)} Schritte am ${dateLabel(pair.activity_date)} · ${formatOutcome(pair.value, outcome)} · ${pair.group === 'lower' ? 'weniger' : 'mehr'} Bewegung`;

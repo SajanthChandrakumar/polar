@@ -38,10 +38,19 @@ describe('PatternExplorer', () => {
     const lower = screen.getByRole('article', { name: 'Weniger Bewegung' });
     const upper = screen.getByRole('article', { name: 'Mehr Bewegung' });
     expect(within(lower).getByText('8 Nächte')).toBeVisible();
-    expect(within(lower).getByText('420 min')).toBeVisible();
-    expect(within(lower).getByText(/Q1 390 min.*Q3 450 min/)).toBeVisible();
+    expect(within(lower).getByText('7 h')).toBeVisible();
+    expect(within(lower).getByText(/Q1 6\.5 h.*Q3 7\.5 h/)).toBeVisible();
     expect(within(upper).getByText('9 Nächte')).toBeVisible();
+    expect(within(upper).getByText('7.7 h')).toBeVisible();
+    expect(screen.getByText('+0.7 h')).toBeVisible();
+    expect(screen.getByText('Schlafdauer (h)')).toBeVisible();
+    expect(screen.getByText('7.1')).toBeVisible();
     expect(screen.getByText(/Beobachteter Medianunterschied/)).toBeVisible();
+  });
+
+  it.each([[-30, '-0.5 h'], [-15, '-0.3 h'], [15, '+0.3 h'], [-3, '-0.1 h'], [3, '+0.1 h'], [-1, '0 h'], [0, '0 h']])('formats a sleep difference of %s minutes in hours', (difference, expected) => {
+    renderExplorer({ data: { ...data, groups: { ...data.groups, upper: { ...data.groups.upper, median: 420 + difference } } } });
+    expect(within(screen.getByText(/Beobachteter Medianunterschied/)).getByText(expected)).toBeVisible();
   });
 
   it('lets people change the time range and outcome through the shared controls', () => {
@@ -87,7 +96,7 @@ describe('PatternExplorer', () => {
     const onInspect = vi.fn();
     renderExplorer({ onInspect });
     const chart = screen.getByRole('region', { name: 'Bewegung und nächste Nacht' });
-    const firstPoint = within(chart).getByRole('button', { name: /02\.10\.2026.*6.?200 Schritte.*390 min/ });
+    const firstPoint = within(chart).getByRole('button', { name: /02\.10\.2026.*6.?200 Schritte.*6\.5 h/ });
     fireEvent.keyDown(firstPoint, { key: 'Enter' });
     expect(screen.getByRole('heading', { name: 'Ausgewählter Punkt' })).toBeVisible();
     expect(screen.getByText('01.10.2026')).toBeVisible();
@@ -98,11 +107,11 @@ describe('PatternExplorer', () => {
     expect(onInspect).toHaveBeenNthCalledWith(1, '/activity/list', ['activity-1']);
     expect(onInspect).toHaveBeenNthCalledWith(2, '/sleeps', ['sleep-1']);
 
-    const secondPoint = within(chart).getByRole('button', { name: /04\.10\.2026.*8.?100 Schritte.*460 min/ });
+    const secondPoint = within(chart).getByRole('button', { name: /04\.10\.2026.*8.?100 Schritte.*7\.7 h/ });
     fireEvent.pointerUp(secondPoint, { pointerType: 'touch' });
     const selected = screen.getByRole('article', { name: 'Ausgewählter Punkt' });
     expect(within(selected).getByText('03.10.2026')).toBeVisible();
-    expect(within(selected).getByText('460 min')).toBeVisible();
+    expect(within(selected).getByText('7.7 h')).toBeVisible();
     expect(onInspect).toHaveBeenCalledTimes(2);
   });
 
@@ -111,7 +120,7 @@ describe('PatternExplorer', () => {
     renderExplorer({ data: synthetic, demo: true, onInspect: vi.fn() });
     expect(screen.getByText(/Beispielanalyse · synthetische Daten/)).toBeVisible();
     expect(screen.queryByText(/Schritte-Grenze/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /02\.10\.2026.*390 min/ }));
+    fireEvent.click(screen.getByRole('button', { name: /02\.10\.2026.*6\.5 h/ }));
     expect(screen.queryByRole('button', { name: 'Aktivitätsquelle ansehen' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ergebnisquelle ansehen' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('So ist der Vergleich zu lesen'));
