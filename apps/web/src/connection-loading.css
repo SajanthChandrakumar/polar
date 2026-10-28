@@ -1,0 +1,17 @@
+.connection-loading {
+  margin: 0 0 24px;
+  padding: clamp(18px, 3vw, 26px);
+  border: 1px solid var(--line, #d6d9cd);
+  border-radius: 18px;
+  background: var(--surface, #fffdf7);
+  color: var(--ink, #24332e);
+}
+.connection-loading-head { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+.connection-loading h2 { margin: 0 0 6px; font-size: 18px; }
+.connection-loading-head p { color: var(--muted, #596b60); font-size: 14px; line-height: 1.5; }
+.connection-loading-clock { flex-shrink: 0; padding: 7px 10px; border-radius: 8px; background: #e7ecdf; color: #254c3d; font-size: 13px; font-variant-numeric: tabular-nums; }
+.connection-loading-track { overflow: hidden; height: 7px; margin-top: 18px; border-radius: 8px; background: #e7ecdf; }
+.connection-loading-track span { display: block; width: 35%; height: 100%; border-radius: inherit; background: #35634e; animation: connection-wait 1.8s ease-in-out infinite alternate; }
+.connection-loading-hint { margin-top: 12px; color: var(--muted, #596b60); font-size: 12px; line-height: 1.6; }
+@keyframes connection-wait { from { transform: translateX(-100%); } to { transform: translateX(286%); } }
+@media (prefers-reduced-motion: reduce) { .connection-loading-track span { animation: none; transform: translateX(90%); } }

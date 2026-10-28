@@ -83,6 +83,12 @@ Ein Prozess, kein Scheduler. Free-Dienste können pausieren; der erste Aufruf ka
 
 Offizielle Quellen: [Blueprint-Format und automatische Deploys](https://render.com/docs/blueprint-spec), [Render-Umgebungsvariablen](https://render.com/docs/environment-variables), [ausgehende IP-Adressen](https://render.com/docs/outbound-ip-addresses), [Python-Version](https://render.com/docs/python-version), [native Build-Werkzeuge](https://render.com/docs/native-runtimes).
 
+## Ladeanzeige beim Öffnen
+
+Die HTML-Seite enthält bereits vor dem Start der Oberfläche einen Ladebalken. Im privaten Dashboard zeigt die Startanzeige anschließend die verstrichene Wartezeit und den aktuellen Schritt: Sitzung prüfen, danach gegebenenfalls die gespeicherte Übersicht laden. Sobald die jeweilige Antwort oder ein Fehler vorliegt, endet die Anzeige. Eine Restzeit oder Prozentangabe wird nicht geschätzt; die öffentliche Demo benötigt keine Serververbindung zu privaten Endpunkten.
+
+Frontend und API laufen aktuell im selben Render-Webdienst. Bei einem ruhenden kostenlosen Dienst zeigt Render vor der Auslieferung unserer HTML-Seite seine eigene Warteseite. Unsere Ladeanzeige kann erst danach erscheinen. Ein eigener Ladebildschirm bereits während dieses Aufwachens würde ein separat ausgeliefertes Frontend erfordern. Siehe [Render: Spinning down on idle](https://render.com/docs/free#spinning-down-on-idle).
+
 ## Sicherheitsstand und Anmeldung
 
 `requirements.txt` enthält die direkten Abhängigkeiten und Sicherheitsuntergrenzen. `requirements.lock` hält die getestete Python-3.12-Auflösung einschließlich transitiver Pakete fest; `apps/web/package-lock.json` erfüllt dieselbe Aufgabe für npm. Der Build aktualisiert pip zuerst auf 26.2.2, damit auch dessen separat mitgelieferter Zertifikatsspeicher erneuert wird. Bei einem manuell eingerichteten Render-Dienst den aktualisierten Build-Befehl aus `render.yaml` übernehmen.
