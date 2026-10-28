@@ -19,7 +19,7 @@ describe('PatternLive', () => {
   it('loads private patterns with the selected range and outcome', async () => {
     vi.mocked(fetch).mockResolvedValue(response(data));
     render(<PatternLive enabled revision="sync-1" />);
-    await screen.findByRole('button', { name: /02\.10\.2026.*390 min/ });
+    await screen.findByRole('button', { name: /02\.10\.2026.*6\.5 h/ });
     expect(fetch).toHaveBeenCalledWith('/api/patterns?days=90&outcome=sleep', expect.objectContaining({ signal: expect.any(AbortSignal) }));
     fireEvent.change(screen.getByRole('combobox', { name: 'Zeitraum' }), { target: { value: '30' } });
     await waitFor(() => expect(fetch).toHaveBeenLastCalledWith('/api/patterns?days=30&outcome=sleep', expect.objectContaining({ signal: expect.any(AbortSignal) })));
@@ -33,9 +33,9 @@ describe('PatternLive', () => {
     expect(screen.getByText(/Melde dich an, um deine privaten Bewegungsmuster zu sehen/)).toBeVisible();
     expect(fetch).not.toHaveBeenCalled();
     view.rerender(<PatternLive enabled revision="sync-1" />);
-    await screen.findByRole('button', { name: /02\.10\.2026.*390 min/ });
+    await screen.findByRole('button', { name: /02\.10\.2026.*6\.5 h/ });
     view.rerender(<PatternLive enabled={false} revision="sync-1" />);
-    expect(screen.queryByRole('button', { name: /02\.10\.2026.*390 min/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /02\.10\.2026.*6\.5 h/ })).not.toBeInTheDocument();
   });
 
   it('aborts the prior request on revision changes and ignores its late response', async () => {
@@ -47,20 +47,20 @@ describe('PatternLive', () => {
     expect(firstSignal.aborted).toBe(true);
     const newer = { ...data, pairs: [{ ...data.pairs[0], value: 460 }] };
     second.resolve(response(newer));
-    await screen.findByRole('button', { name: /460 min/ });
+    await screen.findByRole('button', { name: /7\.7 h/ });
     first.resolve(response(data));
-    await waitFor(() => expect(screen.getByRole('button', { name: /460 min/ })).toBeVisible());
-    expect(screen.queryByRole('button', { name: /390 min/ })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: /7\.7 h/ })).toBeVisible());
+    expect(screen.queryByRole('button', { name: /6\.5 h/ })).not.toBeInTheDocument();
   });
 
   it('clears private data and notifies the app when the API says the session expired', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(response(data)).mockResolvedValueOnce(response({ detail: 'Anmeldung erforderlich' }, 401));
     const onUnauthorized = vi.fn();
     const view = render(<PatternLive enabled revision="sync-1" onUnauthorized={onUnauthorized} />);
-    await screen.findByRole('button', { name: /02\.10\.2026.*390 min/ });
+    await screen.findByRole('button', { name: /02\.10\.2026.*6\.5 h/ });
     view.rerender(<PatternLive enabled revision="sync-2" onUnauthorized={onUnauthorized} />);
     await waitFor(() => expect(onUnauthorized).toHaveBeenCalledTimes(1));
-    expect(screen.queryByRole('button', { name: /02\.10\.2026.*390 min/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /02\.10\.2026.*6\.5 h/ })).not.toBeInTheDocument();
     expect(screen.getByText(/Sitzung abgelaufen/)).toBeVisible();
   });
 
@@ -69,7 +69,7 @@ describe('PatternLive', () => {
     render(<PatternLive enabled revision="sync-1" />);
     expect(await screen.findByText('Archiv nicht erreichbar')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Erneut laden' }));
-    await screen.findByRole('button', { name: /02\.10\.2026.*390 min/ });
+    await screen.findByRole('button', { name: /02\.10\.2026.*6\.5 h/ });
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
