@@ -2,7 +2,7 @@
 
 **Live deployment:** [polarhealth.onrender.com](https://polarhealth.onrender.com/)
 
-**Recovery Lab demo:** [Open the public demo](https://polarhealth.onrender.com/demo)
+In der öffentlichen Demo kannst du eine Beispielnacht auswählen und Schlafphasen, Puls und die Bewegung des Vortags erkunden. [Nachtverlauf öffnen](https://polarhealth.onrender.com/demo#nachtansicht) · [Bewegung und folgende Nacht vergleichen](https://polarhealth.onrender.com/demo)
 
 Stand: 10. Oktober 2026. Polar-Daten werden unverändert archiviert und daraus verständliche Tagesrückmeldungen und persönliche Verläufe abgeleitet.
 

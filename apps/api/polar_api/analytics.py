@@ -119,8 +119,9 @@ def _device_key(value):
     return _stable(value) if value is not None else 'unknown-device'
 
 
-def _metric_payloads(store, since):
-    archived = store.analytics_responses(PATHS, since)
+def _metric_payloads(store, since, paths=PATHS):
+    paths = tuple(dict.fromkeys(path for path in paths if isinstance(path, str)))
+    archived = store.analytics_responses(paths, since)
     result = []
     for response_id, item in archived.items():
         try:
@@ -128,7 +129,7 @@ def _metric_payloads(store, since):
             path = document.get('path')
             status = document.get('http_status')
             fetched = _timestamp(document.get('fetched_at'), timezone.utc)
-            if path not in PATHS or not isinstance(status, int) or not 200 <= status < 300:
+            if path not in paths or not isinstance(status, int) or not 200 <= status < 300:
                 continue
             if fetched is None:
                 continue
