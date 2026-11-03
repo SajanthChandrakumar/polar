@@ -96,6 +96,31 @@ def test_lease_excludes_tabs_cooldown_and_stale_fencing():
     assert store.begin_run(False)['status'] == 'running'
 
 
+def test_automatic_retry_claims_expired_interrupted_run_without_cooldown():
+    store = make_store()
+    first = store.begin_run(True)
+    store.finish_run(first['run_id'], 'interrupted', 'Abruf wurde unterbrochen.')
+
+    retry = store.begin_run(True)
+
+    assert store.run(first['run_id'])['status'] == 'interrupted'
+    assert retry['status'] == 'running'
+
+
+def test_automatic_retry_recovers_expired_running_lease_without_cooldown():
+    store = make_store()
+    first = store.begin_run(True)
+    store.db.sync_lock.update_one(
+        {'_id': 'sync'},
+        {'$set': {'expires_at': datetime.now(timezone.utc) - timedelta(seconds=1)}},
+    )
+
+    retry = store.begin_run(True)
+
+    assert store.run(first['run_id'])['status'] == 'interrupted'
+    assert retry['status'] == 'running'
+
+
 def test_token_storage_is_encrypted_and_database_failure_cannot_succeed():
     from cryptography.fernet import Fernet
     from pymongo.errors import ConnectionFailure

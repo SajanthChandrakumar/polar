@@ -132,6 +132,12 @@ def create_app(settings=None, store=None, *, transport=None, collector=None):
         from .patterns import patterns
         return patterns(store, days=days, outcome=outcome)
 
+    @app.get('/api/nights')
+    def nights_view(request: Request):
+        auth.require(request)
+        from .nights import nights
+        return nights(store)
+
     @app.get('/api/polar/authorize')
     def authorize(request: Request):
         session = auth.require(request)

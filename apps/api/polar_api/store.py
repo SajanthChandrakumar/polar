@@ -92,7 +92,11 @@ class Store:
             pass
         query = {'_id': 'sync', 'expires_at': {'$lte': timestamp}}
         if automatic:
-            query['last_automatic_at'] = {'$lte': timestamp - timedelta(minutes=15)}
+            query['$or'] = [
+                {'last_automatic_at': {'$lte': timestamp - timedelta(minutes=15)}},
+                {'run_status': {'$in': ['interrupted', 'running']}},
+                {'run_status': {'$exists': False}},
+            ]
         rid, token = secrets.token_hex(16), secrets.token_hex(32)
         update = {'expires_at': timestamp + timedelta(seconds=self.LEASE_SECONDS), 'run_id': rid, 'lease_token': token, 'run_status': 'running', 'active_results': {}}
         if automatic:
