@@ -46,10 +46,27 @@ function stageName(stage: string): string { return labels[stage as NightPhase['s
 
 function windowFor(night: Night): WindowRange | null {
   const start = timestamp(night.start), end = timestamp(night.end);
-  if (start !== null && end !== null && end > start) return { start, end };
   const phases = night.phases.map(phase => [timestamp(phase.start), timestamp(phase.end)] as const).filter(([from, to]) => from !== null && to !== null && to > from);
-  if (!phases.length) return null;
-  return { start: Math.min(...phases.map(([from]) => from!)), end: Math.max(...phases.map(([, to]) => to!)) };
+  const phaseStart = phases.length ? Math.min(...phases.map(([from]) => from!)) : null;
+  const phaseEnd = phases.length ? Math.max(...phases.map(([, to]) => to!)) : null;
+  if (start !== null && end !== null && end > start) return { start, end };
+  if (start !== null && end === null && phaseEnd !== null && phaseEnd > start) return { start, end: phaseEnd };
+  if (start === null && end !== null && phaseStart !== null && end > phaseStart) return { start: phaseStart, end };
+  if (start === null && end === null && phaseStart !== null && phaseEnd !== null && phaseEnd > phaseStart) return { start: phaseStart, end: phaseEnd };
+  if (start !== null && end !== null && phaseStart !== null && phaseEnd !== null && phaseEnd > phaseStart) return { start: phaseStart, end: phaseEnd };
+  return null;
+}
+function boundaryReadout(start: number | null, end: number | null) {
+  if (start !== null && end !== null && end > start) return `Schlafzeit ${formatTime(start)} bis ${formatTime(end)}`;
+  if (start !== null && end === null) return `Schlafbeginn ${formatTime(start)} · Schlafende nicht archiviert`;
+  if (start === null && end !== null) return `Schlafende ${formatTime(end)} · Schlafbeginn nicht archiviert`;
+  return 'Schlafgrenzen nicht verfügbar';
+}
+function boundaryNote(start: number | null, end: number | null) {
+  if (start !== null && end === null) return `Schlafbeginn ${formatTime(start)} archiviert; Schlafende nicht archiviert.`;
+  if (start === null && end !== null) return `Schlafende ${formatTime(end)} archiviert; Schlafbeginn nicht archiviert.`;
+  if (start === null && end === null) return 'Schlafgrenzen nicht archiviert.';
+  return 'Die gespeicherten Schlafgrenzen bilden keinen gültigen Zeitraum.';
 }
 function validPhases(night: Night) {
   return night.phases.map(phase => ({ ...phase, from: timestamp(phase.start), to: timestamp(phase.end) }))
@@ -82,12 +99,16 @@ function PhaseTimeline({ night }: { night: Night }) {
   const gapDescription = gaps.map(gap => formatDuration(gap.start, gap.end)).join(', ');
   const start = timestamp(night.start), end = timestamp(night.end);
   const completeBounds = start !== null && end !== null && end > start;
+  const headerRange = completeBounds ? `${formatTime(start)}–${formatTime(end)} Uhr`
+    : start !== null && end === null && range ? `${formatTime(start)}–${formatTime(range.end)} Uhr`
+    : start === null && end !== null && range ? `${formatTime(range.start)}–${formatTime(end)} Uhr`
+    : 'Zeitraum der verfügbaren Phasendaten';
 
-  if (!range) return <section className="night-timeline-card" aria-label="Schlafphasen"><h3>Schlafphasen</h3><p className="night-empty-note">Für diese Nacht liegen keine gespeicherten Schlafgrenzen oder Phasendaten vor.</p></section>;
+  if (!range) return <section className="night-timeline-card" aria-label="Schlafphasen"><h3>Schlafphasen</h3><p className="night-empty-note">{boundaryNote(start, end)}</p><p className="night-empty-note">Keine Phasendaten gespeichert; eine Zeitachse lässt sich nicht darstellen.</p></section>;
 
   return <section className="night-timeline-card" aria-label="Schlafphasen">
-    <div className="night-card-heading"><div><h3>Schlafphasen</h3><p>{completeBounds ? `${formatTime(start)}–${formatTime(end)} Uhr` : 'Zeitraum der verfügbaren Phasendaten'}</p></div>
-      {!completeBounds && <span className="night-data-note">Schlafgrenzen nicht archiviert</span>}
+    <div className="night-card-heading"><div><h3>Schlafphasen</h3><p>{headerRange}</p></div>
+      {!completeBounds && <span className="night-data-note">{start !== null && end === null ? 'Schlafende nicht archiviert' : start === null && end !== null ? 'Schlafbeginn nicht archiviert' : 'Schlafgrenzen nicht verfügbar'}</span>}
     </div>
     <div className="night-stage-legend" aria-label="Farben der Schlafphasen">{stages.map(stage => <span key={stage}><i className={`night-stage-color ${stage}`} aria-hidden="true" />{labels[stage]}</span>)}</div>
     <div className="night-timeline" role="group" aria-label="Phasenverlauf nach Uhrzeit">
@@ -103,7 +124,7 @@ function PhaseTimeline({ night }: { night: Night }) {
       <div className="night-timeline-ticks" aria-hidden="true"><time>{formatTime(range.start)}</time><time>{formatTime(range.start + (range.end - range.start) / 2)}</time><time>{formatTime(range.end)}</time></div>
       {gaps.length > 0 && <p className="night-gap-note">Keine Phasendaten für {gapDescription}. Die Lücke bleibt offen.</p>}
     </div>
-    {!completeBounds && <p className="night-empty-note">Die gespeicherten Schlafgrenzen fehlen; gezeigt wird nur der Zeitraum der archivierten Phasen.</p>}
+    {!completeBounds && <p className="night-empty-note">{start !== null && end === null ? 'Schlafende nicht archiviert; das Ende der Zeitachse markiert den letzten gespeicherten Phasenwert.' : start === null && end !== null ? 'Schlafbeginn nicht archiviert; der Anfang der Zeitachse markiert den ersten gespeicherten Phasenwert.' : 'Schlafgrenzen nicht verfügbar; gezeigt wird nur der Zeitraum der archivierten Phasen.'}</p>}
     {phases.length > 0 && <details className="night-detail-list" key={night.date}>
       <summary>Schlafphasen als Liste</summary>
       <ol className="night-phase-list" aria-label="Schlafphasen mit Uhrzeiten">
@@ -117,7 +138,10 @@ function PulseTimeline({ night, range }: { night: Night; range: WindowRange | nu
   const allPoints = night.pulse.map(point => ({ ...point, at: timestamp(point.time) }))
     .filter((point): point is { time: string; bpm: number; at: number } => point.at !== null && Number.isFinite(point.bpm));
   if (!allPoints.length) return null;
-  const pointRange = range ?? { start: Math.min(...allPoints.map(point => point.at)), end: Math.max(...allPoints.map(point => point.at)) };
+  const firstPoint = Math.min(...allPoints.map(point => point.at)), lastPoint = Math.max(...allPoints.map(point => point.at));
+  const start = range?.start ?? timestamp(night.start) ?? firstPoint;
+  const end = range?.end ?? timestamp(night.end) ?? lastPoint;
+  const pointRange = end > start ? { start, end } : { start: firstPoint, end: lastPoint };
   const safeRange = pointRange.end > pointRange.start ? pointRange : { start: pointRange.start - 150_000, end: pointRange.end + 150_000 };
   const points = allPoints.filter(point => point.at >= safeRange.start && point.at <= safeRange.end);
   if (!points.length) return null;
@@ -170,7 +194,7 @@ export default function NightExplorer({ nights, demo = false, open, loading = fa
       <div className="night-controls"><label htmlFor="night-picker">Nacht auswählen</label><select id="night-picker" value={selected.date} onChange={event => setSelectedDate(event.target.value)}>
         {nights.map(night => <option key={night.date} value={night.date}>{formatDate(night.date)} · {formatSleep(night.sleep_minutes)}</option>)}
       </select></div>
-      <p className="night-selected-readout" aria-live="polite">Ausgewählt: {formatDate(selected.date)}{start !== null && end !== null ? ` · Schlafzeit ${formatTime(start)} bis ${formatTime(end)}` : ' · Schlafgrenzen nicht verfügbar'}{gapCount > 0 ? ` · ${gapLabel}` : ''}.</p>
+      <p className="night-selected-readout" aria-live="polite">Ausgewählt: {formatDate(selected.date)} · {boundaryReadout(start, end)}{gapCount > 0 ? ` · ${gapLabel}` : ''}.</p>
       <dl className="night-metrics">
         <Metric label="Schlafdauer">{formatSleep(selected.sleep_minutes)}</Metric>
         <Metric label="Schlafscore">{selected.sleep_score === null ? 'Nicht verfügbar' : formatNumber().format(selected.sleep_score)}</Metric>
