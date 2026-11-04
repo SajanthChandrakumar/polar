@@ -60,6 +60,18 @@ describe('NightExplorer', () => {
     expect(metric('HRV · Polar Nightly Recharge')).toHaveTextContent('Nicht verfügbar');
   });
 
+  it('preserves a known sleep boundary when the other boundary and phase data are missing', () => {
+    const startOnly: Night = { ...nights[0], end: null, phases: [] };
+    const endOnly: Night = { ...nights[0], start: null, phases: [] };
+    const view = render(<NightExplorer nights={[startOnly]} demo />);
+    expect(screen.getByText('Ausgewählt: 02. Oktober 2026 · Schlafbeginn 23:00 · Schlafende nicht archiviert.')).toBeVisible();
+    expect(screen.getByText('Schlafbeginn 23:00 archiviert; Schlafende nicht archiviert.')).toBeVisible();
+    view.rerender(<NightExplorer nights={[endOnly]} demo />);
+    expect(screen.getByText('Ausgewählt: 02. Oktober 2026 · Schlafende 07:00 · Schlafbeginn nicht archiviert.')).toBeVisible();
+    expect(screen.getByText('Schlafende 07:00 archiviert; Schlafbeginn nicht archiviert.')).toBeVisible();
+    expect(screen.getByText(/Keine Phasendaten/)).toBeVisible();
+  });
+
   it('offers phase labels and times in a keyboard-openable text list', () => {
     render(<NightExplorer nights={nights.slice(0, 1)} demo />);
     fireEvent.click(screen.getByText('Schlafphasen als Liste'));
