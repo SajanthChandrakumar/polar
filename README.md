@@ -1,64 +1,126 @@
 # Polar Health Analytics
 
-**Live deployment:** [polarhealth.onrender.com](https://polarhealth.onrender.com/)
+Eine Fullstack-Anwendung, die Polar-Messungen in persönliche Verläufe, interaktive Nachtansichten und nachvollziehbare Bewegungsvergleiche übersetzt. Entwickelt mit React, TypeScript, Python, FastAPI und MongoDB.
 
-In der öffentlichen Demo kannst du eine Beispielnacht auswählen und Schlafphasen, Puls und die Bewegung des Vortags erkunden. [Nachtverlauf öffnen](https://polarhealth.onrender.com/demo#nachtansicht) · [Bewegung und folgende Nacht vergleichen](https://polarhealth.onrender.com/demo)
+[Öffentliche Demo](https://polarhealth.onrender.com/demo) · [Direkt zum Nachtverlauf](https://polarhealth.onrender.com/demo#nachtansicht) · [Privates Dashboard](https://polarhealth.onrender.com/)
 
-Stand: 10. Oktober 2026. Polar-Daten werden unverändert archiviert und daraus verständliche Tagesrückmeldungen und persönliche Verläufe abgeleitet.
+![Nachtverlauf mit synthetischen Beispielwerten, Schlafphasen und Pulsmittelwerten](docs/images/night-explorer-demo.png)
 
-Dashboard und FastAPI-Backend sind implementiert: privater Besitzerzugang, serverseitiges Polar-OAuth, verschluesselte Tokens, unveraenderte Rohdaten in MongoDB/GridFS sowie Collector fuer 19 ausgewählte Datenbereiche. Polar ist verbunden; echte Originalantworten wurden am 7. Oktober 2026 erfolgreich archiviert. Profilbild und Profilreihenfolge wurden auf Nutzerwunsch entfernt. Zugangsdaten liegen ausschliesslich in der ignorierten lokalen Konfiguration.
+*Die öffentliche Demo und die Abbildung verwenden künstlich erzeugte Daten. Persönliche Messungen sind über den Besitzerzugang erreichbar.*
 
-## Aktuelle Entscheidungen
+## Das Projekt
 
-- Polar Loop Gen 2, verbunden mit Polar Flow.
-- Polar OAuth2 und AccessLink v4; API-Client vorhanden.
-- Render-Konfiguration für automatische Deploys von `main`; dauerhafte Speicherung in einer eigenen MongoDB-Atlas-Datenbank `polar_health_analytics`.
-- Sync zunächst beim authentifizierten Öffnen der Seite; keine automatische Hintergrundplanung im ersten Stand.
-- Raw-Responses vor Parsing unverändert als Binärdaten mit Herkunft, Abrufzeit und Hash archivieren.
-- Dashboard zuerst als private Datenübersicht; danach alle Endpunkte mit echten Daten testen. Algorithmus erst nach verifizierter Datensammlung.
+Wie hängen die Bewegung eines Tages und die folgende Nacht zusammen? Welche Schlafphasen wurden aufgezeichnet? Wie unterscheiden sich einzelne Tage vom eigenen bisherigen Verlauf?
 
-## Dokumentation
+Polar Health Analytics verbindet diese Fragen mit einem überprüfbaren Datenfluss. Originalantworten werden vor der Auswertung archiviert. Daraus entstehen Tageswerte und Nachtverläufe, bei denen Messdatum, Datenlücken und Herkunft sichtbar bleiben.
 
-1. [Lokal starten und verbinden](docs/RUNNING.md)
-2. [Verifizierte API-Vertraege und offene Vertragsfragen](docs/API_CONTRACTS.md)
-3. [Dashboard-Plan](docs/DASHBOARD_PLAN.md)
-4. [Anforderungen](docs/REQUIREMENTS.md)
-5. [Dateninventar](docs/DATA_INVENTORY.md)
-6. [Stack](docs/STACK.md)
-7. [Day 1](docs/DAY1.md)
-8. [Tagesrückmeldung und archivierte Verläufe](docs/ANALYTICS.md)
+Das Projekt umfasst die Verarbeitung vom serverseitigen OAuth-Zugang über die Datensammlung und Archivierung bis zur interaktiven Darstellung im Browser.
 
-Architektur: Collector → Raw Storage → Normalizer → MongoDB → Quality Check → Dashboard → spätere Auswertung.
+## Funktionen
 
-Keine Secrets, Tokens, Gesundheitsdaten oder lokalen Ausgaben ins Repository aufnehmen.
+### Night Explorer
 
-## Dashboard lokal starten
+Eine Nacht auswählen und ihren Verlauf erkunden.
 
-Voraussetzung: Node.js 20.19+ oder 22.12+ und npm.
+- Zeitachse für Wach-, Leicht-, Tief- und REM-Schlaf sowie unbekannte Abschnitte.
+- Schlafdauer in Stunden, Polar-Schlafscore, Schritte des Vortags, ANS-Status und HRV aus Polar Nightly Recharge.
+- Pulsmittelwerte in Fünf-Minuten-Zeitabschnitten innerhalb der gespeicherten Schlafgrenzen.
+- Aufklappbare Listen mit Uhrzeiten und Werten sowie eine per Tastatur bedienbare Nachtauswahl.
+- Zeitliche Ausrichtung über Mitternacht und die Zürcher Sommer-/Winterzeit hinweg. Einzelne bekannte Schlafgrenzen bleiben auch bei unvollständigen Angaben sichtbar.
 
-```sh
-cd apps/web
-npm ci
-npm run dev
+Die private Ansicht lädt archivierte Nächte aus den letzten 90 Kalendertagen beim Öffnen des Explorers. Die öffentliche Demo bietet vier synthetische Beispielnächte.
+
+### Recovery Lab
+
+Das Recovery Lab vergleicht Schritte an einem Tag mit Schlafdauer oder ANS-Status in der folgenden Kalendernacht.
+
+- Auswahl zwischen 30 und 90 Tagen sowie Schlafdauer und ANS-Status.
+- Aufteilung der Bewegungstage anhand des persönlichen Schrittmedians.
+- Gruppenmediane und Quartile ab mindestens sieben vollständigen Paaren **je Gruppe**.
+- Auswählbare Punkte und getrennte Angaben zu fehlenden oder vorläufigen Messungen.
+
+Die synthetischen Vergleichsdaten entstehen mit derselben Berechnungsfunktion wie die private Auswertung.
+
+### Verläufe und Datenherkunft
+
+- Tagesreihen für Schlafdauer, Herzfrequenz, ANS, Schritte und Trainingsdauer über 7, 30 oder 90 Tage.
+- Persönlicher Vergleich mit dem Median der vorherigen 28 Kalendertage, sobald mindestens sieben gültige, abgeschlossene Vergleichstage vorliegen.
+- Dateninspektor mit Abrufzeit, HTTP-Status, Parametern, SHA-256-Hash und gespeicherter Originalantwort.
+- Ladeanzeige mit verstrichener Wartezeit während des Verbindungsaufbaus und des ersten Dashboard-Abrufs.
+
+## Architektur
+
+```mermaid
+flowchart LR
+    Flow[Polar Flow] --> Access[Polar AccessLink v4]
+    Access --> Collector[Python-Collector]
+    Collector --> Archive[MongoDB und GridFS]
+    Archive --> API[FastAPI und Auswertung]
+    API --> Dashboard[Privates React-Dashboard]
+    Fixtures[Synthetische Fixtures] --> Demo[Öffentliche React-Demo]
 ```
 
-Der Entwicklungsserver bindet ausschließlich an `127.0.0.1`; die lokale Adresse steht in seiner Ausgabe (üblicherweise `http://127.0.0.1:5173`).
+| Bereich | Umsetzung |
+| --- | --- |
+| Oberfläche | React, TypeScript, Vite, CSS und SVG |
+| Backend | Python 3.12 und FastAPI |
+| Polar-Anbindung | AccessLink v4, serverseitiges OAuth 2.0, HTTPX |
+| Speicherung | MongoDB und GridFS |
+| Tests | pytest, mongomock, Vitest und React Testing Library |
+| Deployment | Gemeinsamer Frontend-/Backend-Dienst auf Render, MongoDB Atlas |
+
+Der Collector liest 19 ausgewählte Datenbereiche. Er archiviert empfangene Antwortbytes vor dem Parsing und hält Herkunft sowie Abrufverlauf fest. Identische Antwortkörper können denselben Speicher verwenden, während einzelne Abrufe nachvollziehbar bleiben. Die Auswertung führt wiederholte und korrigierte Messungen anhand ihrer archivierten Versionen zusammen.
+
+Sitzungen, verschlüsselte Polar-Tokens und die Sperre für gleichzeitige Abrufe liegen in MongoDB. Ein beendeter oder abgelaufener, unterbrochener Lauf kann beim nächsten authentifizierten Öffnen erneut gestartet werden. Nach abgeschlossenen automatischen Abrufen gilt eine Wartezeit von 15 Minuten.
+
+## Öffentliche Demo lokal starten
+
+Voraussetzung ist Node.js 22 mit npm. Alle Befehle im Projektverzeichnis ausführen.
 
 ```sh
-npm test
-npm run build
-npm run preview
+npm --prefix apps/web ci
+npm --prefix apps/web run dev
 ```
 
-Der Build liegt in `apps/web/dist` und wird nicht versioniert. Es werden keine entfernten Schriftarten oder Bilder geladen.
+Anschließend `/demo` an der vom Entwicklungsserver ausgegebenen Adresse öffnen, üblicherweise [127.0.0.1:5173/demo](http://127.0.0.1:5173/demo).
 
-Die Oberfläche beginnt ohne Verbindung und ohne Kennzahlen. „Beispieldaten ansehen“ aktiviert ausdrücklich synthetische, nur im Browser gehaltene Fixtures. „Demo-Abruf“ simuliert einen Ladezustand und einen Teilerfolg; es gibt keine Anfrage an Polar und keine Speicherung. „Beispieldaten verlassen“ entfernt die Beispiele und bricht einen laufenden Demo-Abruf ab. Nach Anmeldung lädt ein Neuladen die gespeicherten Live-Daten.
+Die Demo arbeitet mit gebündelten Fixtures im Browser. Dafür werden weder eine Polar-Verbindung noch eine Datenbank benötigt. Der feste Beispielzeitraum reicht vom 3. Juli bis zum 30. September 2026, die vier Beispielnächte liegen am Ende dieses Zeitraums.
 
-Alle 19 ausgewählten Endpunkte lassen sich durchsuchen, filtern und im Detail prüfen. Eine erfolgreiche leere Antwort bleibt von Fehlern und übersprungenen Routen getrennt. Die synthetischen Antwortstrukturen sind illustrative Beispiele, keine verifizierten Polar-API-Verträge. Der Verbindungsbutton fordert zuerst den privaten Login an und leitet danach zu Polar weiter. Die Live-Ansicht laedt echte archivierte Antworten ausschliesslich nach Anmeldung. Die sechs Live-Karten werden aus gespeicherten Originalantworten abgeleitet: Pulsmittelwert des jüngsten Tages, tatsächliche Schlafdauer, Polar-ANS-Status, Schritte des jüngsten Tages, Dauer des letzten Trainings und Loop Gen 2. Jede datierte Kennzahl zeigt ihr Messdatum; ältere Werte sind markiert. Fehlende Felder bleiben leer.
+## Privaten Betrieb lokal einrichten
 
-## Backend und Tests
+Benötigt werden Python 3.12, Node.js 22, eine MongoDB-Datenbank und ein Polar-AccessLink-Client.
 
-Die gesamte lokale Einrichtung steht in [RUNNING.md](docs/RUNNING.md). Fuer den echten Betrieb `http://127.0.0.1:5000` verwenden, damit der registrierte IPv4-OAuth-Callback und die Sitzung denselben Host haben. Die alte localhost-Adresse kann auf dem Mac mit AirPlay kollidieren. Das Besitzerpasswort steht unter `OWNER_PASSWORD` in der lokalen `.env`.
+```sh
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.lock
+.venv/bin/python scripts/setup_local.py
+npm --prefix apps/web ci
+npm --prefix apps/web run build
+```
+
+Das Einrichtungsskript erstellt die ignorierte `.env` aus `.env.example` und ergänzt fehlende lokale Zugangsschlüssel. Folgende Werte für die eigene Umgebung setzen.
+
+| Variable | Zweck |
+| --- | --- |
+| `POLAR_CLIENT_ID`, `POLAR_CLIENT_SECRET` | Zugangsdaten des Polar-Clients |
+| `MONGODB_URI`, `MONGODB_DATABASE` | Verbindung und Name der Archivdatenbank |
+| `APP_ORIGIN` | Lokal `http://127.0.0.1:5000` |
+| `POLAR_REDIRECT_URI` | Lokal `http://127.0.0.1:5000/oauth2_callback`, auch beim Polar-Client registrieren |
+| `OWNER_PASSWORD` | Passwort für den privaten Besitzerzugang |
+| `SESSION_SECRET` | Signierung der Sitzung |
+| `TOKEN_ENCRYPTION_KEY` | Fernet-Schlüssel für gespeicherte Polar-Tokens |
+
+Danach das Backend starten.
+
+```sh
+PYTHONPATH=apps/api .venv/bin/uvicorn polar_api.app:create_app --factory --host 127.0.0.1 --port 5000 --no-access-log
+```
+
+[127.0.0.1:5000](http://127.0.0.1:5000) öffnen, mit dem lokal hinterlegten Besitzerpasswort anmelden und über „Mit Polar verbinden“ den OAuth-Ablauf abschließen. Der Datenabruf startet beim authentifizierten Öffnen des verbundenen Dashboards und lässt sich über „Aktualisieren“ erneut anstoßen.
+
+Die vollständige Einrichtung und das Render-Deployment stehen in [RUNNING.md](docs/RUNNING.md). `render.yaml` enthält die Deployment-Konfiguration für `main`. Geheime Werte werden in der jeweiligen Laufzeitumgebung gesetzt.
+
+## Tests
 
 ```sh
 PYTHONPATH=apps/api .venv/bin/python -m pytest tests
@@ -66,18 +128,22 @@ npm --prefix apps/web test
 npm --prefix apps/web run build
 ```
 
-Tests verwenden ausschliesslich simulierte Polar-/MongoDB-Daten. Die bestehende Anwendung ist unter [polarhealth.onrender.com](https://polarhealth.onrender.com/) erreichbar. `render.yaml` baut Frontend und Backend und aktiviert Deploys von `main`; Einrichtung, Secrets und Polar-Callback stehen in [der Render-Anleitung](docs/RUNNING.md#auf-render-von-main-deployen). Ein Neustart kann einen laufenden Sync unterbrechen; bereits gespeicherte Originalantworten bleiben erhalten. Nach einem abrupten Prozessende wird die verlorene Sperre spaetestens nach 90 Sekunden wieder verfuegbar.
+Die Tests verwenden simulierte MongoDB- und Polar-Antworten. Sie prüfen unter anderem Zugriffsrechte, Abrufsperren und Wiederholungen, Archivierung, Korrekturen, Zeitumstellungen, fehlende Messungen, Mindesthistorie, Nachtwechsel und die Trennung zwischen öffentlicher Demo und privaten Daten.
 
-## Öffentliches Recovery Lab
+## Einordnung der Auswertungen
 
-Die [öffentliche Demo](https://polarhealth.onrender.com/demo) bietet den Bewegungsvergleich ohne Anmeldung. Er verwendet vier fest datierte, synthetische Fixtures vom 3. Juli bis 30. September 2026. Die 30-/90-Tage- und Schlaf-/ANS-Auswahl arbeitet vollständig im Browser; sie fragt weder Sitzung, Dashboard, Sync noch Polar-Daten ab. Alle Beispielquellen sind vor dem Bündeln entfernt.
+Die angezeigten Zusammenhänge beschreiben Beobachtungen aus einem persönlichen Archiv. Sie erlauben keine Aussage über Ursachen oder medizinische Diagnosen. Schlafscore und ANS stammen aus den jeweiligen Polar-Feldern.
 
-Die Fixtures erzeugt `PYTHONPATH=apps/api .venv/bin/python scripts/generate_pattern_demo.py`. Der Generator erstellt synthetische normalisierte Tagespunkte und verwendet dieselbe reine `calculate_patterns`-Funktion wie das Backend. Der private Datenfluss bleibt getrennt: erfolgreiche Rohantworten → vorhandene Tageskorrektur und Normalisierung → geschütztes, nur lesendes `GET /api/patterns` → gemeinsame `PatternExplorer`-Ansicht. Öffentliche Demo und private Oberfläche teilen nur die Darstellung.
+Fehlende Werte bleiben als Lücken oder „Nicht verfügbar“ erkennbar. Ein tatsächlich gemessener Nullwert wird dort erhalten, wo der Messwert ihn zulässt. Tagesstände können vorläufig sein. Schlafdauer wird in der Nachtansicht und im Recovery Lab in Stunden angezeigt. Die zugrunde liegenden API-Werte bleiben in Minuten.
 
-Verglichen werden Bewegungstage mit der folgenden Zürcher Kalendernacht. Die Schritt-Grenze ist der Median aller verfügbaren, nicht vorläufigen Bewegungstage im gewählten verschobenen Zeitraum, unabhängig von verfügbaren Nachtwerten. Schlaf wird in Minuten, ANS als Messwert dargestellt. Null Schritte bleiben gültig; fehlende und vorläufige Tage werden getrennt ausgewiesen. Gruppenmediane und Quartile erscheinen erst ab sieben vollständigen Nächten je Gruppe. Das ist eine Beobachtung ohne Kausalaussage, Tragezeitnachweis, Prognose oder medizinische Empfehlung.
+Ein Zeitraum von 90 Tagen zeigt die dafür vorhandenen Archivmessungen. Der Collector fragt aktuell ein rollierendes Fenster ab, das sieben vergangene Kalendertage und den laufenden Tag umfasst. Eine regelmäßige Hintergrundplanung und eine automatische historische Nachladung sind bislang nicht eingerichtet. Der kostenlose Render-Dienst kann beim ersten Aufruf Anlaufzeit benötigen.
 
-Private Paare benötigen vollständige, gültige Archivmessungen; die aktuelle Abdeckung ist hier nicht verifiziert. Die öffentliche Demo verwendet synthetische Daten und ersetzt keine fehlenden privaten Messungen. Details stehen in [ANALYTICS.md](docs/ANALYTICS.md).
+## Weiterführende Dokumentation
 
-## Verläufe und persönlicher Vergleich
+- [Lokale Einrichtung und Deployment](docs/RUNNING.md)
+- [Auswertungsmethoden und Tagesvergleiche](docs/ANALYTICS.md)
+- [Polar-API-Verträge und beobachtete Antwortformate](docs/API_CONTRACTS.md)
+- [Dateninventar](docs/DATA_INVENTORY.md)
+- [Archivpflege und Sicherung](docs/ARCHIVE_MAINTENANCE.md)
 
-Unter den sechs Kreisen zeigen fünf Diagramme die archivierten Messungen über 7, 30 oder 90 Tage. Tagesfeedback vergleicht mit dem Median der vorherigen 28 Tage, sobald mindestens sieben vollständige Vergleichstage vorhanden sind. Details und Originalantworten sind verknüpft. Siehe [ANALYTICS.md](docs/ANALYTICS.md).
+Private Zugangsdaten, Tokens, Gesundheitsdaten und lokale Ausgaben gehören in die dafür vorgesehenen privaten Speicher. Die versionierten Demodaten und die Abbildung sind synthetisch.
