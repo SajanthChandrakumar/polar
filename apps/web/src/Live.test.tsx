@@ -4,7 +4,15 @@ import App from './App';
 import LiveDetails from './LiveDetails';
 import { sources } from './data';
 const source = {path:'/ppi-samples',status:'empty',http_status:200,count:0,fetched_at:'2026-10-05T12:00:00+02:00',message:'Keine Einträge',response_ids:['list','detail']};
-const openSources = () => fireEvent.click(screen.getByRole('link',{name:'Details ansehen'}));
+function renderPage(hash = '#sources') {
+  window.history.replaceState(null, '', '/' + hash);
+  return render(<App/>);
+}
+function logout() {
+  const menu = document.querySelector('.topbar-account')!;
+  fireEvent.click(menu.querySelector('summary')!);
+  fireEvent.click(within(menu as HTMLElement).getByRole('button', {name:'Abmelden'}));
+}
 const revealOriginal = (container: HTMLElement = screen.getByRole('dialog')) => fireEvent.click(within(container).getByText('Originaldaten ansehen'));
 function backend(authenticated = true, connected = false) {
   const requests: {url:string, init?:RequestInit}[] = []; let loggedIn = authenticated;
@@ -31,9 +39,8 @@ function backend(authenticated = true, connected = false) {
 afterEach(() => {vi.useRealTimers(); vi.unstubAllGlobals();});
 describe('private live dashboard', () => {
   it('keeps modal keyboard focus on visible controls when original data is closed or expanded', async () => {
-    backend(); render(<App/>);
+    backend(); renderPage();
     await screen.findByText('Erfolgreich leer',{selector:'.badge'});
-    openSources();
     fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
     const dialog=screen.getByRole('dialog');
     const close=within(dialog).getByRole('button',{name:'Details schließen'});
@@ -57,8 +64,7 @@ describe('private live dashboard', () => {
   });
 
   it('keeps raw response fields closed until the user opens Originaldaten', async () => {
-    backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
-    fireEvent.click(screen.getByRole('link',{name:'Details ansehen'}));
+    backend(); renderPage(); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
     fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
     const dialog=screen.getByRole('dialog');
     const sourceDisclosure=within(dialog).getByText('Quellendetails');
@@ -73,36 +79,20 @@ describe('private live dashboard', () => {
     expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('list');
   });
 
-  it('renders real dashboard metrics with dates and clears them on logout', async () => {
-    const {fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
-    fetcher.mockImplementation(async(url,init)=>url==='/api/dashboard' ? new Response(JSON.stringify({connected:false,last_sync:null,sources:[source],metrics:{heart:{value:72.5,unit:'bpm',detail:'Mittelwert der Pulsmessungen',date:'2026-10-07',status:'available'},moon:{value:420,unit:'min',detail:'Tatsächliche Schlafdauer',date:'2026-10-06',status:'stale'},activity:{value:0,unit:'Schritte',detail:'Schritt-Samples',date:'2026-10-07',status:'available'}}}),{status:200}) : fallback(url,init));
-    render(<App/>);
-    const heart=screen.getByRole('heading',{name:'Herzfrequenz'}).closest('article')!;
-    await within(heart).findByText('72.5');
-    expect(within(heart).getByText('bpm')).toBeVisible();
-    expect(within(heart).getByText(/07.10.2026/)).toBeVisible();
-    const sleep=within(screen.getByLabelText('Datenübersicht')).getByRole('heading',{name:'Schlaf'}).closest('article')!;
-    expect(within(sleep).getByText('7 h 00')).toBeVisible();
-    expect(within(sleep).getByText(/Älterer Messwert/)).toBeVisible();
-    const activity=screen.getByRole('heading',{name:'Aktivität'}).closest('article')!;
-    expect(within(activity).getByText('0')).toBeVisible();
-    fireEvent.click(screen.getByRole('button',{name:'Abmelden'}));
-    await waitFor(()=>expect(within(heart).queryByText('72.5')).not.toBeInTheDocument());
-  });
   it('keeps health endpoints private, logs in via password, and clears live data on logout', async () => {
-    const {requests} = backend(false); render(<App/>);
+    const {requests} = backend(false); renderPage('#overview');
     await waitFor(() => expect(requests.length).toBe(1)); expect(requests[0].url).toBe('/api/session');
-    fireEvent.click(screen.getByRole('button',{name:'Anmelden'})); const dialog=screen.getByRole('dialog');
+    const dialog=(await screen.findByLabelText('Besitzerpasswort')).closest('form')!;
     expect(within(dialog).getByLabelText('Besitzerpasswort')).toHaveAttribute('type','password');
     fireEvent.change(within(dialog).getByLabelText('Besitzerpasswort'),{target:{value:'test-only'}});
     fireEvent.click(within(dialog).getByRole('button',{name:'Anmelden'}));
-    await screen.findByRole('button',{name:'Abmelden'}); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
+    fireEvent.click(screen.getByRole('link',{name:'Daten'})); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
     expect(requests.find(r=>r.url==='/api/login')?.init?.body).toBe(JSON.stringify({password:'test-only'}));
-    fireEvent.click(screen.getByRole('button',{name:'Abmelden'})); await waitFor(()=>expect(screen.queryByText('Erfolgreich leer',{selector:'.badge'})).not.toBeInTheDocument());
-    expect(screen.getByRole('button',{name:'Anmelden'})).toBeVisible(); expect(screen.queryByText('58')).not.toBeInTheDocument();
+    logout(); await waitFor(()=>expect(screen.queryByText('Erfolgreich leer',{selector:'.badge'})).not.toBeInTheDocument());
+    expect(screen.getByRole('heading',{name:'Privater Zugang'})).toBeVisible(); expect(screen.queryByText('58')).not.toBeInTheDocument();
   });
   it('shows real statuses and provenance without synthetic metrics, dates or route state', async () => {
-    backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'}); openSources();
+    backend(); renderPage(); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
     expect(screen.getAllByRole('button',{name:/^Details zu/})).toHaveLength(19);
     expect(screen.queryByText('58')).not.toBeInTheDocument(); expect(screen.queryByText('03.10.2026, 09:00')).not.toBeInTheDocument(); expect(screen.queryByText('Übersprungen')).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Datenquellen filtern'),{target:{value:'empty'}});
@@ -114,10 +104,10 @@ describe('private live dashboard', () => {
   });
   it('reports backend failures visibly instead of substituting demo data', async () => {
     vi.stubGlobal('fetch',vi.fn(async () => new Response(JSON.stringify({detail:'Dienst nicht verfügbar'}),{status:503})));
-    render(<App/>); await screen.findByRole('alert'); expect(screen.getByRole('alert')).toHaveTextContent('Dienst nicht verfügbar'); expect(screen.queryByText('58')).not.toBeInTheDocument();
+    renderPage(); await screen.findByRole('alert'); expect(screen.getByRole('alert')).toHaveTextContent('Dienst nicht verfügbar'); expect(screen.queryByText('58')).not.toBeInTheDocument();
   });
   it('auto syncs only connected live sessions, polls and stops after completion', async () => {
-    vi.useFakeTimers(); const {requests}=backend(true,true); render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    vi.useFakeTimers(); const {requests}=backend(true,true); renderPage(); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     expect(requests.filter(r=>r.url==='/api/sync')).toHaveLength(1);
     expect(JSON.parse(requests.find(r=>r.url==='/api/sync')!.init!.body as string)).toEqual({automatic:true});
     expect(screen.getByRole('button',{name:/Aktualisierung läuft/})).toBeDisabled();
@@ -125,13 +115,13 @@ describe('private live dashboard', () => {
     await act(async()=>{await vi.advanceTimersByTimeAsync(6000);}); expect(requests.filter(r=>r.url==='/api/sync/run-1')).toHaveLength(1);
   });
   it('cancels polling on demo entry and isolates synthetic mode from backend', async () => {
-    vi.useFakeTimers(); const {requests}=backend(true,true); render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
-    fireEvent.click(screen.getByRole('button',{name:'Beispieldaten ansehen'})); openSources(); const before=requests.length;
-    fireEvent.click(screen.getByRole('button',{name:'Demo-Abruf'})); fireEvent.click(screen.getByRole('button',{name:'Details zu Herzfrequenz'}));
-    await act(async()=>{await vi.advanceTimersByTimeAsync(6000);}); expect(requests).toHaveLength(before); expect(screen.getByText('58')).toBeVisible();
+    vi.useFakeTimers(); const {requests}=backend(true,true); const privatePage = renderPage(); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    privatePage.unmount(); render(<App demo/>); const before=requests.length;
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Herzfrequenz'}));
+    await act(async()=>{await vi.advanceTimersByTimeAsync(6000);}); expect(requests).toHaveLength(before); expect(screen.getByRole('dialog')).toBeVisible();
   });
   it('cancels scheduled poll on unmount', async () => {
-    vi.useFakeTimers(); const {requests}=backend(true,true); const {unmount}=render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    vi.useFakeTimers(); const {requests}=backend(true,true); const {unmount}=renderPage(); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     unmount(); await act(async()=>{await vi.advanceTimersByTimeAsync(6000);}); expect(requests.some(r=>r.url.startsWith('/api/sync/'))).toBe(false);
   });
   it('honors automatic cooldown while allowing manual sync', async () => {
@@ -139,7 +129,7 @@ describe('private live dashboard', () => {
     fetcher.mockImplementation(async (url,init)=> {
       if(url==='/api/sync' && JSON.parse(init?.body as string).automatic) {requests.push({url,init});return new Response(JSON.stringify({detail:'Automatischer Abruf erst nach 15 Minuten'}),{status:429});}
       return fallback(url,init);
-    }); const {unmount}=render(<App/>); await waitFor(()=>expect(requests.some(r=>r.url==='/api/sync')).toBe(true));
+    }); const {unmount}=renderPage(); await waitFor(()=>expect(requests.some(r=>r.url==='/api/sync')).toBe(true));
     expect(screen.queryByText(/Automatischer Abruf erst nach 15 Minuten/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'Aktualisieren'})); await waitFor(()=>expect(requests.filter(r=>r.url==='/api/sync')).toHaveLength(2));
     expect(JSON.parse(requests.filter(r=>r.url==='/api/sync')[1].init!.body as string)).toEqual({automatic:false}); unmount();
@@ -147,17 +137,16 @@ describe('private live dashboard', () => {
   it('shows a rejected password and keeps private health endpoints untouched', async () => {
     const {fetcher,requests}=backend(false); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url==='/api/login' ? new Response(JSON.stringify({detail:'Passwort ungültig'}),{status:401}) : fallback(url,init));
-    render(<App/>); await waitFor(()=>expect(screen.getByRole('button',{name:'Anmelden'})).toBeEnabled());
-    fireEvent.click(screen.getByRole('button',{name:'Anmelden'}));
+    renderPage('#overview'); await screen.findByLabelText('Besitzerpasswort');
     fireEvent.change(screen.getByLabelText('Besitzerpasswort'),{target:{value:'incorrect-test-password'}});
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Anmelden'}));
+    fireEvent.click(screen.getByRole('button',{name:'Anmelden'}));
     expect(await screen.findByRole('alert')).toHaveTextContent('Passwort ungültig');
     expect(requests.some(r=>r.url==='/api/dashboard')).toBe(false);
   });
   it('shows stored binary metadata and detail failures without parsing an image as JSON', async () => {
     const {fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url.startsWith('/api/responses/') ? url.endsWith('detail') ? new Response(JSON.stringify({detail:'Archiv momentan nicht verfügbar'}),{status:503}) : new Response(JSON.stringify({path:'/user/profile-picture',params:{size:'large'},http_status:200,content_type:'image/png',fetched_at:source.fetched_at,sha256:'binary-hash',size:8192,binary:true,payload:null}),{status:200}) : fallback(url,init));
-    render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'}); openSources();
+    renderPage(); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
     fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
     revealOriginal();
     expect(await screen.findByText('image/png')).toBeVisible(); expect(screen.getByText('8192 Bytes')).toBeVisible();
@@ -169,97 +158,59 @@ describe('private live dashboard', () => {
   it('shows invalid JSON as archived raw text rather than silently replacing it with null', async () => {
     const {fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url.startsWith('/api/responses/') ? new Response(JSON.stringify({path:source.path,params:{},http_status:200,content_type:'application/json',fetched_at:source.fetched_at,sha256:'invalid-hash',size:12,binary:false,payload:null,raw_text:'{invalid-json'}),{status:200}) : fallback(url,init));
-    render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'});openSources();fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal();
+    renderPage(); await screen.findByText('Erfolgreich leer',{selector:'.badge'});fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal();
     expect(await screen.findByLabelText('Antwortinhalt')).toHaveTextContent('{invalid-json');
   });
   it('aborts in-flight detail and dashboard requests when entering demo', async () => {
-    const {requests}=backend(); render(<App/>); await screen.findByText('Erfolgreich leer',{selector:'.badge'}); openSources();
+    const {requests}=backend(); const privatePage = renderPage(); await screen.findByText('Erfolgreich leer',{selector:'.badge'});
     fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal(); await screen.findByText('actual-hash');
     fireEvent.click(screen.getByRole('button',{name:'Details schließen'}));
-    fireEvent.click(screen.getByRole('button',{name:'Beispieldaten ansehen'}));
+    privatePage.unmount(); render(<App demo/>);
     expect(requests.filter(r=>r.url==='/api/dashboard'||r.url.startsWith('/api/responses/')).every(r=>r.init?.signal?.aborted)).toBe(true);
     expect(screen.queryByText('actual-hash')).not.toBeInTheDocument();
   });
   it('aborts poll on logout and removes an open private detail', async () => {
     vi.useFakeTimers(); const {requests,fetcher}=backend(true,true); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url==='/api/sync/run-1' ? (requests.push({url,init}),new Promise<Response>(()=>{})) : fallback(url,init));
-    render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);}); await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
-    openSources(); fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
-    fireEvent.click(screen.getByRole('button',{name:'Abmelden'})); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    renderPage(); await act(async()=>{await vi.advanceTimersByTimeAsync(0);}); await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    logout(); await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     expect(requests.find(r=>r.url==='/api/sync/run-1')?.init?.signal?.aborted).toBe(true);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(screen.queryByText('actual-hash')).not.toBeInTheDocument();
   });
   it('reports sync poll failure and enables a manual retry', async () => {
     vi.useFakeTimers(); const {fetcher}=backend(true,true); const fallback=fetcher.getMockImplementation()!;
     fetcher.mockImplementation(async(url,init)=>url==='/api/sync/run-1' ? new Response(JSON.stringify({detail:'Abrufstatus nicht verfügbar'}),{status:503}) : fallback(url,init));
-    render(<App/>); await act(async()=>{await vi.advanceTimersByTimeAsync(0);}); await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
+    renderPage(); await act(async()=>{await vi.advanceTimersByTimeAsync(0);}); await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
     expect(screen.getByRole('alert')).toHaveTextContent('Abrufstatus nicht verfügbar');expect(screen.getByRole('button',{name:'Aktualisieren'})).toBeEnabled();
   });
 
   it('gives a safe error for non-JSON server failures', async()=>{
     vi.stubGlobal('fetch',vi.fn(async()=>new Response('<html>upstream unavailable</html>',{status:502,headers:{'Content-Type':'text/html'}})));
-    render(<App/>);expect(await screen.findByRole('alert')).toHaveTextContent('Anfrage fehlgeschlagen (HTTP 502)');
+    renderPage();expect(await screen.findByRole('alert')).toHaveTextContent('Anfrage fehlgeschlagen (HTTP 502)');
     expect(screen.getByRole('alert')).not.toHaveTextContent('Unexpected token');
   });
   it('never lets an aborted older response overwrite the selected archive response', async()=>{
     const {fetcher}=backend();const fallback=fetcher.getMockImplementation()!;
     let finishOld:(response:Response)=>void=()=>{};
     fetcher.mockImplementation(async(url,init)=>url==='/api/responses/list' ? new Promise<Response>(resolve=>{finishOld=resolve;}) : fallback(url,init));
-    render(<App/>);await screen.findByText('Erfolgreich leer',{selector:'.badge'});openSources();fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal();
+    renderPage();await screen.findByText('Erfolgreich leer',{selector:'.badge'});fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'})); revealOriginal();
     fireEvent.change(screen.getByLabelText('Gespeicherte Antwort'),{target:{value:'detail'}});await screen.findByText('actual-hash');
     await act(async()=>{finishOld(new Response(JSON.stringify({path:source.path,params:{},http_status:200,content_type:'application/json',fetched_at:source.fetched_at,sha256:'stale-response-hash',size:2,binary:false,payload:[]}),{status:200}));});
     expect(screen.getByText('actual-hash')).toBeVisible();expect(screen.queryByText('stale-response-hash')).not.toBeInTheDocument();
   });
 
-    it('closes and clears the private inspector when pattern analysis returns 401', async () => {
-    const {requests,fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
-    let finishPatterns!:(response:Response)=>void;
-    fetcher.mockImplementation(async(url,init)=> {
-      if(url.startsWith('/api/patterns?')) { requests.push({url,init}); return new Promise<Response>(resolve=>{finishPatterns=resolve;}); }
-      return fallback(url,init);
-    });
-    render(<App/>);
-    await screen.findByText('Erfolgreich leer',{selector:'.badge'});
-    await waitFor(()=>expect(requests.some(request=>request.url.startsWith('/api/patterns?'))).toBe(true));
-    openSources(); fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
-    const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
-    expect(await within(dialog).findByText('actual-hash')).toBeVisible();
-    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('list');
-    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveTextContent('list');
-
-    await act(async()=>{finishPatterns(new Response(JSON.stringify({detail:'Anmeldung erforderlich'}),{status:401,headers:{'Content-Type':'application/json'}}));});
-    await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
-    expect(screen.queryByText('Antwort 1 von 2 · list')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));
-    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
-    expect(screen.queryByText('Antwort 1 von 2 · list')).not.toBeInTheDocument();
+  it('clears private access when the focused pattern request returns 401', async () => {
+    const {fetcher}=backend();
+    const fallback=fetcher.getMockImplementation()!;
+    fetcher.mockImplementation((url,init)=>url.startsWith('/api/patterns?')
+      ? Promise.resolve(new Response(null,{status:401})) : fallback(url,init));
+    renderPage('#pattern-explorer');
+    expect(await screen.findByRole('heading',{name:'Privater Zugang'})).toBeVisible();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading',{name:'Bewegung und nächste Nacht'})).not.toBeInTheDocument();
   });
 
-  it('closes a private source inspector while a pending patterns request returns 401', async () => {
-    const {requests,fetcher}=backend(); const fallback=fetcher.getMockImplementation()!;
-    let finishPatterns!:(response:Response)=>void;
-    const analytics={days:7,from:'2026-10-01',to:'2026-10-07',timezone:'Europe/Zurich',series:[{key:'heart',label:'Herzfrequenz',unit:'bpm',kind:'line',source_path:'/continuous-samples',coverage:{valid_days:1,total_days:7},points:[{date:'2026-10-03',value:70,provisional:false,response_ids:['private-pattern-source-id']}],feedback:[]}]};
-    fetcher.mockImplementation(async(url,init)=> {
-      if(url.startsWith('/api/patterns?')) { requests.push({url,init}); return new Promise<Response>(resolve=>{finishPatterns=resolve;}); }
-      if(url.startsWith('/api/analytics?')) return new Response(JSON.stringify(analytics),{status:200});
-      return fallback(url,init);
-    });
-    render(<App/>);
-    const heart=await screen.findByRole('region',{name:'Herzfrequenz'});
-    await waitFor(()=>expect(requests.some(request=>request.url.startsWith('/api/patterns?'))).toBe(true));
-    fireEvent.change(within(heart).getByRole('combobox',{name:'Tageswert Herzfrequenz'}),{target:{value:'2026-10-03'}});
-    fireEvent.click(within(heart).getByText('Messdetails ansehen'));
-    fireEvent.click(await within(heart).findByRole('button',{name:'Originalantwort ansehen'}));
-    const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
-    expect(await within(dialog).findByText('actual-hash')).toBeVisible();
-    expect(within(dialog).getByLabelText('Gespeicherte Antwort')).toHaveValue('private-pattern-source-id');
-
-    await act(async()=>{finishPatterns(new Response(JSON.stringify({detail:'Anmeldung erforderlich'}),{status:401,headers:{'Content-Type':'application/json'}}));});
-    await waitFor(()=>expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(screen.queryByLabelText('Gespeicherte Antwort')).not.toBeInTheDocument();
-    expect(screen.queryByText('Antwort 1 von 1 · private-pattern-source-id')).not.toBeInTheDocument();
-  });
 it('treats logout 401 as signed out and purges private state while aborting inflight requests', async()=>{
     vi.useFakeTimers();const {requests,fetcher}=backend(true,true);const fallback=fetcher.getMockImplementation()!;
     let finishPoll:(response:Response)=>void=()=>{};
@@ -269,11 +220,11 @@ it('treats logout 401 as signed out and purges private state while aborting infl
       if(url.startsWith('/api/responses/')){requests.push({url,init});return new Promise<Response>(()=>{});}
       return fallback(url,init);
     });
-    render(<App/>);await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    renderPage();await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
     await act(async()=>{await vi.advanceTimersByTimeAsync(2000);});
-    openSources(); fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
-    fireEvent.click(screen.getByRole('button',{name:'Abmelden'}));await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
-    expect(screen.getByRole('button',{name:'Anmelden'})).toBeVisible();
+    fireEvent.click(screen.getByRole('button',{name:'Details zu Pulsintervalle'}));await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    logout();await act(async()=>{await vi.advanceTimersByTimeAsync(0);});
+    expect(screen.getByRole('heading',{name:'Privater Zugang'})).toBeVisible();
     expect(screen.queryByText('Erfolgreich leer',{selector:'.badge'})).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(requests.filter(r=>r.url==='/api/sync/run-1'||r.url.startsWith('/api/responses/')).every(r=>r.init?.signal?.aborted)).toBe(true);
@@ -306,9 +257,9 @@ it('opens the exact historical archive response from a chart point', async () =>
     if(url==='/api/responses/historical') return new Response(JSON.stringify({path:'/continuous-samples',params:{},http_status:200,content_type:'application/json',fetched_at:'2026-10-04',sha256:'history-hash',size:30,binary:false,payload:{historicalRecord:true}}),{status:200});
     return fallback(url,init);
   });
-  render(<App/>);
+  renderPage('#analytics-history');
   const heart=await screen.findByRole('region',{name:'Herzfrequenz'});
-  fireEvent.change(within(heart).getByRole('combobox',{name:'Tageswert Herzfrequenz'}),{target:{value:'2026-10-03'}});
+  fireEvent.change(screen.getByRole('combobox',{name:'Tag auswählen'}),{target:{value:'2026-10-03'}});
   fireEvent.click(within(heart).getByText('Messdetails ansehen'));
   fireEvent.click(await within(heart).findByRole('button',{name:'Originalantwort ansehen'}));
   const dialog=screen.getByRole('dialog'); revealOriginal(dialog);
@@ -325,12 +276,12 @@ it('hides and aborts private analytics immediately when logout is pending', asyn
     if(url.startsWith('/api/analytics?')) return new Response(JSON.stringify({days:7,from:'2026-10-01',to:'2026-10-07',timezone:'Europe/Zurich',series:[{key:'heart',label:'Herzfrequenz',unit:'bpm',kind:'line',source_path:'/continuous-samples',coverage:{valid_days:1,total_days:7},points:[{date:'2026-10-03',value:70,provisional:false,response_ids:['private-history-id']}],feedback:[]}]}),{status:200});
     return fallback(url,init);
   });
-  render(<App/>);
+  renderPage('#analytics-history');
   const heart=await screen.findByRole('region',{name:'Herzfrequenz'});
-  fireEvent.change(within(heart).getByRole('combobox',{name:'Tageswert Herzfrequenz'}),{target:{value:'2026-10-03'}});
+  fireEvent.change(screen.getByRole('combobox',{name:'Tag auswählen'}),{target:{value:'2026-10-03'}});
   fireEvent.click(within(heart).getByText('Messdetails ansehen'));
   await within(heart).findByText('private-history-id');
-  fireEvent.click(screen.getByRole('button',{name:'Abmelden'}));
+  logout();
   await waitFor(()=>expect(screen.queryByText('private-history-id')).not.toBeInTheDocument());
   await act(async()=>{finishLogout(new Response(null,{status:204}));});
 });

@@ -10,6 +10,7 @@ type Props = {
   onOutcomeChange: (outcome: PatternOutcome) => void;
   onInspect?: (path: string, responseIds: string[]) => void;
   demo: boolean;
+  embedded?: boolean;
   loading?: boolean;
   error?: string;
   onRetry?: () => void;
@@ -124,14 +125,14 @@ function SelectedPair({ pair, outcome, demo, onInspect }: { pair: PatternPair; o
   </article>;
 }
 
-export default function PatternExplorer({ data, days, outcome, onDaysChange, onOutcomeChange, onInspect, demo, loading = false, error = '', onRetry, accessRequired = false }: Props) {
+export default function PatternExplorer({ data, days, outcome, onDaysChange, onOutcomeChange, onInspect, demo, embedded = false, loading = false, error = '', onRetry, accessRequired = false }: Props) {
   const [selectedKey, setSelectedKey] = useState('');
   const selected = data?.pairs.find(pair => pairKey(pair) === selectedKey);
   const canSummarize = data?.status === 'available' && data.groups.lower.count >= data.minimum_group_size && data.groups.upper.count >= data.minimum_group_size && data.groups.lower.median !== null && data.groups.upper.median !== null;
   const difference = canSummarize ? data.groups.upper.median! - data.groups.lower.median! : null;
 
   return <section className="pattern-explorer" id="pattern-explorer" aria-labelledby="pattern-heading">
-    <div className="pattern-heading-row"><div className="pattern-heading-copy"><p className="eyebrow">RECOVERY LAB</p><h2 id="pattern-heading">Wie hängt Bewegung mit der nächsten Nacht zusammen?</h2><p>Vergleiche deine Schritte an einem Tag mit Schlafdauer oder ANS-Status in der folgenden Nacht.</p></div>{demo && <span className="pattern-demo-label">Beispielanalyse · synthetische Daten</span>}</div>
+    <div className="pattern-heading-row"><div className="pattern-heading-copy">{!embedded && <p className="eyebrow">RECOVERY LAB</p>}<h2 id="pattern-heading">{embedded ? 'Bewegung und nächste Nacht' : 'Wie hängt Bewegung mit der nächsten Nacht zusammen?'}</h2><p>Vergleiche deine Schritte an einem Tag mit Schlafdauer oder ANS-Status in der folgenden Nacht.</p></div>{demo && !embedded && <span className="pattern-demo-label">Beispielanalyse · synthetische Daten</span>}</div>
     <div className="pattern-toolbar">
       <label>Zeitraum<select aria-label="Zeitraum" value={days} onChange={event => onDaysChange(Number(event.target.value))}><option value={30}>Letzte 30 Tage</option><option value={90}>Letzte 90 Tage</option></select></label>
       <label>Ergebnis<select aria-label="Ergebnis" value={outcome} onChange={event => onOutcomeChange(event.target.value as PatternOutcome)}><option value="sleep">Schlafdauer</option><option value="ans">ANS-Status</option></select></label>

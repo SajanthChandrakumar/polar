@@ -1,49 +1,45 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
-beforeEach(() => vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({authenticated:false}),{status:200}))));
-afterEach(() => {vi.useRealTimers();vi.unstubAllGlobals();});
-const optIn = () => fireEvent.click(screen.getByRole('button', { name: 'Beispieldaten ansehen' }));
-const showSources = () => fireEvent.click(screen.getByRole('link', { name: 'Details ansehen' }));
+const response = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+beforeEach(() => { window.history.replaceState({}, '', '/'); vi.stubGlobal('fetch', vi.fn(async () => response({ authenticated: false }))); });
+afterEach(() => { vi.unstubAllGlobals(); window.history.replaceState({}, '', '/'); });
 
-describe('Dashboard behavior', () => {
-  it('orders the day, six rings and history, then opens the source archive from the header', async () => {
+async function openData() {
+  fireEvent.click(screen.getByRole('link', { name: 'Daten' }));
+  await screen.findByRole('heading', { name: 'Daten' });
+}
+
+describe('workspace shell', () => {
+  it('shows the four persistent destinations and the private login gate', async () => {
     render(<App />);
-    const day = screen.getByRole('region', { name: 'Dein Tag' });
-    const rings = screen.getByLabelText('Datenübersicht');
-    const history = await screen.findByRole('heading', { name: 'Dein Verlauf' });
-    expect(day.compareDocumentPosition(rings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(rings.compareDocumentPosition(history) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Aktualisieren' })).toBeDisabled();
-    const sourceDetails = screen.getByText('Details & Originaldaten').closest('details')!;
-    expect(sourceDetails).not.toHaveAttribute('open');
-    expect(screen.getByRole('link', { name: 'Details ansehen' })).toBeVisible();
-    fireEvent.click(screen.getByRole('link', { name: 'Details ansehen' }));
-    expect(sourceDetails).toHaveAttribute('open');
-    expect(screen.getByRole('button', { name: 'Details zu Pulsintervalle' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Anmelden' })).toBeVisible();
-    fireEvent.click(document.querySelector('.account-disclosure > summary')!);
-    expect(screen.getByRole('button', { name: 'Mit Polar verbinden' })).toBeVisible();
+    expect(screen.getByRole('navigation', { name: 'Arbeitsbereiche' }).querySelectorAll('a')).toHaveLength(4);
+    expect(screen.getByRole('link', { name: 'Übersicht' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('heading', { name: 'Privater Zugang' })).toBeVisible();
+    expect(screen.getByLabelText('Besitzerpasswort')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Öffentliche Demo ansehen' })).toHaveAttribute('href', '/demo');
   });
 
-  it('starts unconnected and shows metrics only after explicit demo opt-in; leaving clears them', () => {
+  it('does not mount private trends or sleep fetches before authentication', async () => {
     render(<App />);
-    expect(screen.getByText('Nicht verbunden')).toBeVisible();
-    expect(screen.queryByText('58')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Aktualisieren' })).toBeDisabled();
-    optIn();
-    expect(screen.getByText('58')).toBeVisible();
-    expect(screen.getByRole('status', { name: 'Datenmodus' })).toHaveTextContent('synthetisch');
-    fireEvent.click(screen.getByRole('button', { name: 'Beispieldaten verlassen' }));
-    expect(screen.queryByText('58')).not.toBeInTheDocument();
-    expect(screen.getByText('Nicht verbunden')).toBeVisible();
+    await screen.findByRole('heading', { name: 'Privater Zugang' });
+    const fetchMock = vi.mocked(fetch);
+
+    fireEvent.click(screen.getByRole('link', { name: 'Trends' }));
+    await screen.findByRole('heading', { name: 'Trends' });
+    fireEvent.click(screen.getByRole('link', { name: 'Schlaf' }));
+    await screen.findByRole('heading', { name: 'Schlaf' });
+    expect(await screen.findByRole('heading', { name: 'Privater Zugang' })).toBeVisible();
+    expect(fetchMock.mock.calls.some(([path]) => String(path).startsWith('/api/patterns') || String(path) === '/api/nights' || String(path).startsWith('/api/analytics'))).toBe(false);
   });
 
-  it('filters the 19 sources and inspects a successful empty response without calling it unsupported', () => {
-    render(<App />);
-    optIn();
-    showSources();
+  it('keeps the source inventory filter and accessible inspector in the Data destination', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    render(<App demo />);
+    await openData();
+
     expect(screen.getAllByRole('button', { name: /^Details zu/ })).toHaveLength(19);
     fireEvent.change(screen.getByRole('searchbox', { name: 'Datenquellen durchsuchen' }), { target: { value: 'ppi' } });
     expect(screen.getAllByRole('button', { name: /^Details zu/ })).toHaveLength(1);
@@ -55,12 +51,12 @@ describe('Dashboard behavior', () => {
     expect(within(dialog).getByText(/keine Aussage zur Geräteunterstützung/)).toBeVisible();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Details schließen' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('keeps route IDs absent and omits the removed profile endpoints', () => {
-    render(<App />);
-    optIn();
-    showSources();
+  it('keeps route IDs absent and omits removed profile endpoints from the inventory', async () => {
+    render(<App demo />);
+    await openData();
     fireEvent.click(screen.getByRole('button', { name: 'Details zu Routen' }));
     expect(within(screen.getByRole('dialog')).getByText(/Keine Route-ID/)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Details schließen' }));
@@ -68,48 +64,23 @@ describe('Dashboard behavior', () => {
     expect(screen.queryByRole('button', { name: 'Details zu Profilreihenfolge' })).not.toBeInTheDocument();
   });
 
-  it('simulates one loading run and exposes isolated partial failure and denied permission', () => {
-    vi.useFakeTimers();
+  it('shows the Polar connection step after a successful private login', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const path = String(input);
+      if (path === '/api/session') return response({ authenticated: false });
+      if (path === '/api/dashboard') return response({ connected: false, last_sync: null, sources: [], metrics: {} });
+      if (path.startsWith('/api/analytics')) return response({ days: 30, from: '2026-09-10', to: '2026-10-09', timezone: 'Europe/Zurich', series: [] });
+      return response({});
+    });
+    vi.stubGlobal('fetch', fetchMock);
     render(<App />);
-    optIn();
-    showSources();
-    const refresh = screen.getByRole('button', { name: 'Demo-Abruf' });
-    fireEvent.click(refresh);
-    expect(screen.getByRole('button', { name: /Demo-Abruf läuft/ })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: /Demo-Abruf läuft/ }));
-    act(() => vi.advanceTimersByTime(1800));
-    expect(screen.getByText(/Demo-Abruf beendet: 16 von 19/)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Demo-Abruf' })).toBeEnabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Details zu Hauttemperatur' }));
-    expect(within(screen.getByRole('dialog')).getByText('503 Service Unavailable')).toBeVisible();
-    expect(within(screen.getByRole('dialog')).getByText(/Simulierter Serverfehler/)).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Details schließen' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Details zu Abonnements' }));
-    expect(within(screen.getByRole('dialog')).getByText('403 Forbidden')).toBeVisible();
-  });
+    await screen.findByRole('heading', { name: 'Privater Zugang' });
+    fireEvent.change(screen.getByLabelText('Besitzerpasswort'), { target: { value: 'private' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
 
-    it('shows the private pattern lab entry without requesting patterns before sign-in', async () => {
-    render(<App />);
-    expect(screen.getByRole('link', { name: 'Bewegungsmuster' })).toHaveAttribute('href', '#pattern-explorer');
-    expect(screen.getByRole('link', { name: 'Öffentliche Demo' })).toHaveAttribute('href', '/demo');
-    expect(await screen.findByRole('heading', { name: 'Wie hängt Bewegung mit der nächsten Nacht zusammen?' })).toBeVisible();
-    expect(screen.getByText(/Melde dich an, um deine privaten Bewegungsmuster zu sehen/)).toBeVisible();
-    expect(vi.mocked(fetch).mock.calls.some(([path]) => String(path).startsWith('/api/patterns'))).toBe(false);
-  });
-it('cancels a pending demo run when leaving demo and explains the connection step', async () => {
-    render(<App />);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Mit Polar verbinden' })).toBeEnabled());
-    vi.useFakeTimers();
-    fireEvent.click(document.querySelector('.account-disclosure > summary')!);
-    fireEvent.click(screen.getByRole('button', { name: 'Mit Polar verbinden' }));
-    expect(within(screen.getByRole('dialog')).getByText(/OAuth/)).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Schließen' }));
-    optIn();
-    fireEvent.click(screen.getByRole('button', { name: 'Demo-Abruf' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Beispieldaten verlassen' }));
-    act(() => vi.advanceTimersByTime(3000));
-    expect(screen.queryByText(/Demo-Abruf beendet/)).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Polar verbinden' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Mit Polar verbinden' })).toHaveAttribute('href', '/api/polar/authorize');
     expect(screen.getByRole('button', { name: 'Aktualisieren' })).toBeDisabled();
-    expect(screen.queryByText('58')).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/login', expect.objectContaining({ method: 'POST', body: JSON.stringify({ password: 'private' }) }));
   });
 });

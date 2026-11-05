@@ -8,31 +8,17 @@ function metric(label: string) {
 }
 beforeEach(() => vi.stubGlobal('fetch', vi.fn()));
 const originalPath = window.location.pathname + window.location.search + window.location.hash;
-const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
 afterEach(() => {
   vi.unstubAllGlobals();
   window.history.replaceState(null, '', originalPath);
-  if (originalScrollIntoView) Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: originalScrollIntoView });
-  else Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
 });
 
 describe('public Night Explorer demo', () => {
-  it('scrolls to the Night Explorer after mounting from a direct fragment URL', () => {
-    const scrollIntoView = vi.fn();
-    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+  it('opens bundled nights from the published deep link without network requests', () => {
     window.history.replaceState(null, '', '/demo#nachtansicht');
     render(<PatternDemo />);
-    expect(scrollIntoView).toHaveBeenCalledTimes(1);
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
-  });
-
-  it('uses synthetic nights aligned to the published example pairs and makes no network requests', () => {
-    render(<PatternDemo />);
-    expect(screen.getByRole('heading', { name: 'Dein Nachtverlauf' })).toBeVisible();
-    expect(screen.getByRole('link', { name: /Nacht Explorer ansehen/ })).toHaveAttribute('href', '#nachtansicht');
-    expect(document.getElementById('nachtansicht')).toBeInTheDocument();
-    expect(screen.getByText(/Nur synthetische Beispielwerte/)).toBeVisible();
-    expect(screen.getByText('4 Beispielnächte · 27.–30. September 2026')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Schlaf' })).toBeVisible();
+    expect(screen.getByText('Synthetische Daten')).toBeVisible();
     const picker = screen.getByRole('combobox', { name: 'Nacht auswählen' });
     expect(picker.querySelectorAll('option')).toHaveLength(4);
     fireEvent.change(picker, { target: { value: '2026-09-27' } });
