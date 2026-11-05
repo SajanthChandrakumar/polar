@@ -73,3 +73,16 @@ describe('PatternLive', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
+
+it('loads only nights in the focused sleep view and aborts when leaving it', async () => {
+  const nightRequest = deferred<Response>();
+  vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => String(input) === '/api/nights' ? nightRequest.promise : Promise.resolve(response(data))));
+  const view = render(<PatternLive enabled view="sleep" revision="sync-1" />);
+
+  await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/nights', expect.objectContaining({ signal: expect.any(AbortSignal) })));
+  expect(vi.mocked(fetch).mock.calls.some(([path]) => String(path).startsWith('/api/patterns'))).toBe(false);
+  const nightSignal = vi.mocked(fetch).mock.calls[0][1]?.signal as AbortSignal;
+  view.rerender(<PatternLive enabled view="patterns" revision="sync-1" />);
+  expect(nightSignal.aborted).toBe(true);
+  await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/patterns?days=90&outcome=sleep', expect.anything()));
+});

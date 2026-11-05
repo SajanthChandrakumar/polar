@@ -28,6 +28,17 @@ function metric(label: string) {
 }
 
 describe('NightExplorer', () => {
+  it('separates sleep stages into named time tracks without filling unobserved intervals', () => {
+    render(<NightExplorer nights={nights} demo />);
+    const timeline = screen.getByRole('group', { name: 'Phasenverlauf nach Uhrzeit' });
+    const light = within(timeline).getByRole('group', { name: 'Leicht' });
+    const deep = within(timeline).getByRole('group', { name: 'Tief' });
+    expect(within(light).getByTitle('Leicht · 23:00–00:00')).toBeInTheDocument();
+    expect(within(deep).getByTitle('Tief · 00:30–02:00')).toBeInTheDocument();
+    expect(within(light).queryByTitle(/00:30–02:00/)).not.toBeInTheDocument();
+    expect(within(timeline).getByText(/00:00–00:30/)).toBeVisible();
+  });
+
   it('uses actual phase boundaries and leaves unsampled gaps visible', () => {
     render(<NightExplorer nights={nights} demo />);
     const timeline = screen.getByRole('group', { name: 'Phasenverlauf nach Uhrzeit' });

@@ -18,17 +18,27 @@ Das Projekt umfasst die Verarbeitung vom serverseitigen OAuth-Zugang über die D
 
 ## Funktionen
 
+Die Oberfläche ist in vier feste Bereiche gegliedert. Öffentliche Demo und privates Archiv verwenden dieselbe Navigation und dieselben Ansichten.
+
+| Bereich | Inhalt |
+| --- | --- |
+| **Übersicht** | Tageswerte mit gemeinsamem Messdatum, offizielle Polar-Erholung und Schlafverlauf |
+| **Schlaf** | Einzelne Nächte, getrennte Schlafphasenspuren und Pulsmittelwerte |
+| **Trends** | Zeitreihen über 7/30/90 Tage und Bewegungsvergleiche im Recovery Lab |
+| **Daten** | Polar-Verbindung, Abrufstatus, Datenquellen und Originalantworten |
+
+
 ### Night Explorer
 
 Eine Nacht auswählen und ihren Verlauf erkunden.
 
-- Zeitachse für Wach-, Leicht-, Tief- und REM-Schlaf sowie unbekannte Abschnitte.
+- Getrennte, beschriftete Zeitspuren für Wach-, Leicht-, Tief- und REM-Schlaf sowie unbekannte Abschnitte.
 - Schlafdauer in Stunden, Polar-Schlafscore, Schritte des Vortags, ANS-Status und HRV aus Polar Nightly Recharge.
 - Pulsmittelwerte in Fünf-Minuten-Zeitabschnitten innerhalb der gespeicherten Schlafgrenzen.
 - Aufklappbare Listen mit Uhrzeiten und Werten sowie eine per Tastatur bedienbare Nachtauswahl.
 - Zeitliche Ausrichtung über Mitternacht und die Zürcher Sommer-/Winterzeit hinweg. Einzelne bekannte Schlafgrenzen bleiben auch bei unvollständigen Angaben sichtbar.
 
-Die private Ansicht lädt archivierte Nächte aus den letzten 90 Kalendertagen beim Öffnen des Explorers. Die öffentliche Demo bietet vier synthetische Beispielnächte.
+Die private Ansicht lädt archivierte Nächte aus den letzten 90 Kalendertagen beim Öffnen des Bereichs „Schlaf“. Die öffentliche Demo bietet vier synthetische Beispielnächte.
 
 ### Recovery Lab
 
@@ -134,7 +144,7 @@ Die Tests verwenden simulierte MongoDB- und Polar-Antworten. Sie prüfen unter a
 
 Die angezeigten Zusammenhänge beschreiben Beobachtungen aus einem persönlichen Archiv. Sie erlauben keine Aussage über Ursachen oder medizinische Diagnosen. Schlafscore und ANS stammen aus den jeweiligen Polar-Feldern.
 
-Fehlende Werte bleiben als Lücken oder „Nicht verfügbar“ erkennbar. Ein tatsächlich gemessener Nullwert wird dort erhalten, wo der Messwert ihn zulässt. Tagesstände können vorläufig sein. Schlafdauer wird in der Nachtansicht und im Recovery Lab in Stunden angezeigt. Die zugrunde liegenden API-Werte bleiben in Minuten.
+Fehlende Werte bleiben als Lücken oder „Nicht verfügbar“ erkennbar. Ein tatsächlich gemessener Nullwert wird dort erhalten, wo der Messwert ihn zulässt. Tagesstände können vorläufig sein. Schlafdauer wird in Stunden und Minuten angezeigt; Diagrammachsen verwenden Stunden. Die zugrunde liegenden API-Werte bleiben in Minuten.
 
 Ein Zeitraum von 90 Tagen zeigt die dafür vorhandenen Archivmessungen. Der Collector fragt aktuell ein rollierendes Fenster ab, das sieben vergangene Kalendertage und den laufenden Tag umfasst. Eine regelmäßige Hintergrundplanung und eine automatische historische Nachladung sind bislang nicht eingerichtet. Der kostenlose Render-Dienst kann beim ersten Aufruf Anlaufzeit benötigen.
 

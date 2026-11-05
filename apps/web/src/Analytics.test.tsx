@@ -32,7 +32,7 @@ describe('archive analytics', () => {
     render(<Analytics authenticated demo={false} onInspect={inspect}><div data-testid="rings">Ringe</div></Analytics>);
     const day = await screen.findByRole('region', { name: 'Dein Tag' });
     expect(screen.getByRole('combobox', { name: 'Tag auswählen' })).toHaveValue('2026-10-09');
-    expect(within(day).getByText('🙁')).toBeVisible();
+    expect(within(day).getByText('Polar 2/6')).toBeVisible();
     expect(within(day).getByText('Schwächer erholt')).toBeVisible();
     expect(within(day).getByText('7 h 10 min')).toBeVisible();
     expect(within(day).getByText('74 bpm')).toBeVisible();
@@ -42,31 +42,30 @@ describe('archive analytics', () => {
     expect(within(day).getByRole('link', { name: 'Verlauf ansehen' })).toBeVisible();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Tag auswählen' }), { target: { value: '2026-10-07' } });
-    expect(within(day).getByText('Noch keine Erholungsbewertung verfügbar.')).toBeVisible();
+    expect(within(day).getByText('Ungültige Erholungsbewertung')).toBeVisible();
     expect(within(day).queryByText('Sehr schwach')).not.toBeInTheDocument();
     expect(within(day).getByText('70 bpm')).toBeVisible();
 
     const heart = await screen.findByRole('region', { name: 'Herzfrequenz' });
-    expect(within(heart).getByRole('combobox', { name: 'Tageswert Herzfrequenz' })).toHaveValue('2026-10-09');
-    fireEvent.change(within(heart).getByRole('combobox', { name: 'Tageswert Herzfrequenz' }), { target: { value: '2026-10-07' } });
+    expect(within(heart).getByText('07.10.2026 · 70 bpm', { selector: 'strong' })).toBeVisible();
     fireEvent.click(within(heart).getByText('Messdetails ansehen'));
     fireEvent.click(within(heart).getByRole('button', { name: 'Originalantwort ansehen' }));
     expect(inspect).toHaveBeenCalledWith('/continuous-samples', ['heart-7']);
   });
 
   it.each([
-    [1, '🙁', 'Schwächer erholt', 'Sehr schwach'],
-    [2, '🙁', 'Schwächer erholt', 'Schwach'],
-    [3, '🙁', 'Schwächer erholt', 'Beeinträchtigt'],
-    [4, '😐', 'Erholung okay', 'Okay'],
-    [5, '🙂', 'Gut erholt', 'Gut'],
-    [6, '🙂', 'Gut erholt', 'Sehr gut'],
-  ])('maps Polar level %i to its exact tier and original response', async (value, face, label, tier) => {
+    [1, 'Schwächer erholt', 'Sehr schwach'],
+    [2, 'Schwächer erholt', 'Schwach'],
+    [3, 'Schwächer erholt', 'Beeinträchtigt'],
+    [4, 'Erholung okay', 'Okay'],
+    [5, 'Gut erholt', 'Gut'],
+    [6, 'Gut erholt', 'Sehr gut'],
+  ])('maps Polar level %i to its exact tier and original response', async (value, label, tier) => {
     const inspect = vi.fn();
     vi.stubGlobal('fetch', vi.fn(async () => response({ ...data, daily_recovery: [{ date: data.to, value: Number(value), reason: 'available', source_path: '/nightly-recharge-results', response_ids: [`recovery-${value}`] }] })));
     render(<Analytics authenticated demo={false} onInspect={inspect} />);
     const day = await screen.findByRole('region', { name: 'Dein Tag' });
-    expect(within(day).getByText(face)).toBeVisible();
+    expect(within(day).getByText(`Polar ${value}/6`)).toBeVisible();
     expect(within(day).getByText(label)).toBeVisible();
     fireEvent.click(within(day).getByText('Warum diese Rückmeldung?'));
     expect(within(day).getByText(`Polar-Stufe ${value} von 6: ${tier}.`)).toBeVisible();
@@ -81,10 +80,8 @@ describe('archive analytics', () => {
     ] })));
     render(<Analytics authenticated demo={false} />);
     const day = await screen.findByRole('region', { name: 'Dein Tag' });
-    expect(within(day).getByText('○')).toBeVisible();
-    expect(within(day).getByText('Noch keine Erholungsbewertung verfügbar.')).toBeVisible();
+    expect(within(day).getByText('Keine Polar-Erholungsbewertung für diesen Tag gespeichert.')).toBeVisible();
     fireEvent.change(within(day).getByRole('combobox', { name: 'Tag auswählen' }), { target: { value: '2026-10-07' } });
-    expect(within(day).getByText('○')).toBeVisible();
     expect(within(day).queryByText('🙁')).not.toBeInTheDocument();
     fireEvent.click(within(day).getByText('Warum diese Rückmeldung?'));
     expect(within(day).getByText('Ungültige Stufe – siehe Originaldaten')).toBeVisible();

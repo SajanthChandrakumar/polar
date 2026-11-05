@@ -1,17 +1,10 @@
-.connection-loading {
-  margin: 0 0 24px;
-  padding: clamp(18px, 3vw, 26px);
-  border: 1px solid var(--line, #d6d9cd);
-  border-radius: 18px;
-  background: var(--surface, #fffdf7);
-  color: var(--ink, #24332e);
-}
+.connection-loading { margin: 24px 0; padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); }
 .connection-loading-head { display: flex; align-items: start; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
-.connection-loading h2 { margin: 0 0 6px; font-size: 18px; }
-.connection-loading-head p { color: var(--muted, #596b60); font-size: 14px; line-height: 1.5; }
-.connection-loading-clock { flex-shrink: 0; padding: 7px 10px; border-radius: 8px; background: #e7ecdf; color: #254c3d; font-size: 13px; font-variant-numeric: tabular-nums; }
-.connection-loading-track { overflow: hidden; height: 7px; margin-top: 18px; border-radius: 8px; background: #e7ecdf; }
-.connection-loading-track span { display: block; width: 35%; height: 100%; border-radius: inherit; background: #35634e; animation: connection-wait 1.8s ease-in-out infinite alternate; }
-.connection-loading-hint { margin-top: 12px; color: var(--muted, #596b60); font-size: 12px; line-height: 1.6; }
+.connection-loading h2 { margin-bottom: 7px; font-size: 18px; font-weight: 600; }
+.connection-loading-head p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+.connection-loading-clock { flex-shrink: 0; padding: 7px 10px; border-radius: 4px; background: #f1f3f6; color: #596273; font-size: 13px; }
+.connection-loading-track { overflow: hidden; height: 4px; margin-top: 22px; border-radius: 2px; background: #edf0f4; }
+.connection-loading-track span { display: block; width: 35%; height: 100%; border-radius: inherit; background: var(--accent); animation: connection-wait 1.8s ease-in-out infinite alternate; }
+.connection-loading-hint { margin-top: 14px; color: var(--muted); font-size: 12px; line-height: 1.7; }
 @keyframes connection-wait { from { transform: translateX(-100%); } to { transform: translateX(286%); } }
 @media (prefers-reduced-motion: reduce) { .connection-loading-track span { animation: none; transform: translateX(90%); } }
